@@ -19,6 +19,11 @@ PVPYTHON_PATH = "/data/ParaView-5.6.0-osmesa-MPI-Linux-64bit/bin/pvpython"
 
 LOG_DIR = PurePosixPath.joinpath(BASE_DIR, "logs")
 
-if not Path(LOG_DIR).exists():
-    Path.mkdir(LOG_DIR)
+HOMES_PATH = "/home"
 
+SUDO_PW = "09170725"
+
+DEFAULT_PW = "123456"
+
+if not Path(LOG_DIR).exists():
+    Path(LOG_DIR).mkdir()

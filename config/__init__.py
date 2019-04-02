@@ -8,8 +8,7 @@
 """
 
 
-
 try:
-    from config.local_setting import *
+    from config.local_settings import *
 except ImportError:
-    from config.online_setting import *
+    from config.online_settings import *

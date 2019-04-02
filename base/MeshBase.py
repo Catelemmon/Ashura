@@ -3,9 +3,10 @@
 """
 @author: cicada
 @contact: 1713856662a@gmail.com
-@file: Mesh.py
-@time: 19-3-28 上午11:06 
+@file: MeshBase.py
+@time: 2019/4/1 上午9:21 
 """
+
 import codecs
 from pathlib import Path
 
@@ -17,8 +18,7 @@ from utils.log_utils import get_logger
 logger = get_logger(logger_name="core")
 
 
-class MeshOpt:
-
+class MeshBase:
     def __new__(cls, workpath, is_upload=False, upload_mtype="OpenFoam", **kwargs):
         """
         创建一个Mesh
