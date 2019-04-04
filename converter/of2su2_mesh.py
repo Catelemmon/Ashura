@@ -6,6 +6,12 @@
 @file: of2su2_mesh.py
 @time: 2019/4/4 上午10:00 
 """
+import codecs
+import re
+from pathlib import Path
+from typing import List
+
+from config.config import PLOYMESH_FILES
 
 """
 Description:
@@ -37,6 +43,15 @@ def SkipFirstLines(listLines):
     return i
 
 
+def check_count(sline: str):
+    if not re.match("\d{2,}", sline):
+        """
+        判定是否在首行
+        :param sline 文件的每一行
+        """
+        return True
+    return False
+
 def PointIsInList(PointIndex, listPoints):
     PtInsideList = False
     for i in range(len(listPoints)):
@@ -44,6 +59,15 @@ def PointIsInList(PointIndex, listPoints):
             PtInsideList = True
     return PtInsideList
 
+def point_in_list(point, points: list):
+    """
+    校验某个点点是否在点的列表里面
+    :param points:
+    :param point: 某个点
+    :param
+    :return: 判断是否在里面
+    """
+    return point in points
 
 def HaveCommonPoints(listPoints_1, listPoints_2):
     haveCommonPts = False
@@ -58,15 +82,38 @@ def HaveCommonPoints(listPoints_1, listPoints_2):
     return haveCommonPts
 
 
-def CommonPoints(listPoints_1, listPoints_2):
+def points_is_crossed(points1, points2):
+    """
+    是否含有共同的点 点集1和点集2
+    :return:
+    """
+    for sp1 in points1:
+        for sp2 in points2:
+            if sp1 == sp2:
+                return True
+    return False
+
+def CommonPoints(listPoints1, listPoints2):
     listCommonPoints = []
-    for i in range(len(listPoints_1)):
-        if (PointIsInList(listPoints_1[i], listPoints_2) == True):
-            listCommonPoints.append(listPoints_1[i])
+    for i in range(len(listPoints1)):
+        if (PointIsInList(listPoints1[i], listPoints2) == True):
+            listCommonPoints.append(listPoints1[i])
     return listCommonPoints
+
+def ask_common_points(points1, points2):
+    """
+    求两个点集中的公共元素
+    :param points1:
+    :param points2:
+    :return:
+    """
+    spoints1 = set(points1)
+    spoints2 =set(points2)
+    return list(spoints1.intersection(spoints2))
 
 
 def ScalarProduct(Vect_1_point_1, Vect_1_point_2, Vect_2_point_1, Vect_2_point_2):
+    # TODO 求两个向量的数量积
     dimVect = len(Vect_1_point_1)
     Vect_1 = []
     for i in range(dimVect):
@@ -80,35 +127,114 @@ def ScalarProduct(Vect_1_point_1, Vect_1_point_2, Vect_2_point_1, Vect_2_point_2
     return valScalarProduct
 
 
-print
-""
-print
-""
-print
-"*******************************************************"
-print
-" Program to convert OpenFoam meshes to SU2 mesh format"
-print
-" This program has been written by Laurent Berdoulat"
-print
-" laurent.berdoulat@wolfconseil.com"
-print
-" date: 11/12/2013"
-print
-"*******************************************************"
-print
-""
-print
-""
+class OF2SU2Converter:
+
+    def __init__(self, ployMesh_path, su2mesh_path, su2mesh_name, mesh_dimension):
+        # TODO 需要完成另外的逻辑
+        self.ployMesh_path = ployMesh_path
+
+    """
+    对应关系
+    faces:
+    第一个数字是代表总共有多少个face, 后面是一个大的元组
+    元组内部有多个单独数据结构表示face 类似于"n(p1 p2 p3 p4)", 第一个数字代表n个点构成的一个 face, 跟一对括号,
+    括号内部的数字代表的是点的编号, pn 与 points 文件的点的索引相对应
+    PS: faces 文件中 "n(p1 p2 p3 p4)" 不一定在同一行, 还有可能会有空行
+    
+    points:
+    本质也是一个元组, 第一个数字是总共有多少个点, 
+    元组内部多个单独数据结构表示点, 类似于 "(x y z)", 代表 x, y, z 轴上的坐标  
+    point的索引即faces文件中的pn所映射的点
+    """
+
+    def _read_mf(self, fpath):
+        with codecs.open(fpath, mode="r", encoding="utf-8") as mf:
+            pass
+
+    @classmethod
+    def _mesh_slice(cls, data_list: List):
+        for line_num, ldata in enumerate(data_list):
+            if re.match("\d{2, }", ldata):
+                count = int(ldata.strip())
+                start = line_num + 2
+                end = start + count
+                data_list = data_list[start:end]
+        return data_list, count
+
+    @classmethod
+    def _faces_slice(cls, faces_list: List):
+        start = 0
+        has_started = False
+        count = 0
+        # 找start
+        for line_num, ldata in enumerate(faces_list):
+            if re.match("\d{2, }", ldata):
+                count = int(ldata.strip())
+                has_started = True
+                continue
+            if re.match("\d{1, }", ldata) and has_started:
+                start = line_num
+        # 找end
+        for fi in range(len(faces_list), 0, -1):
+            if re.match("\)", faces_list[fi]):
+                end = fi
+        return faces_list[start:end], count
+
+    @classmethod
+    def _read_points(cls, points_path):
+        lpoints = []  # 点的list
+        with codecs.open(points_path, mode="r", encoding="utf-8") as pf:
+            for pline in pf:
+                lpoints.append(pline)
+
+        # slice
+        lpoints, pcount = cls._mesh_slice(lpoints)
+
+        for pindex, item in enumerate(lpoints):
+            rm_brackets = re.sub("[\(|\)]", "", item)
+            lpoints[pindex] = tuple(rm_brackets.split(" "))
+        spoints = set(lpoints)
+        points_dic = {
+            "pcount": pcount,
+            "lpoints": lpoints,
+            "spoints": spoints
+        }
+        return points_dic
+
+    @classmethod
+    def _read_faces(cls, faces_path):
+        lfaces = []  # face的list
+        with codecs.open(faces_path, mode="r", encoding="utf-8") as ff:
+            for fline in ff:
+                lfaces.append(fline)
+
+        # slice
+        lfaces, fcount = cls._faces_slice(lfaces)
+
+        # TODO 使用正则表达式来解析faces
+        """ ^\d{1,2}[\s\r\n]*?\([\s\S]+?\) """ # 解析每个小的元素
+        """ ^\d{2,}[\r\n]\( """ # 解析总数
+
+
+
+
+
+
+    def _mt_readmesh(self):
+        """
+        多线程读openfoam的网格
+        :return:
+        """
+        for mf_name in PLOYMESH_FILES:
+            # 遍历目标的网格文件
+            pass
 
 # =========================
 # Reading of the input file
 # =========================
-nameFile = raw_input("Enter the name of the input file:");
+nameFile = "path"
 listLinesInput = []
 try:
-    print
-    "Reading of the input file", nameFile
     InputFile = open(nameFile, 'r')
     for line in InputFile:
         listLinesInput.append(line[0:-1])
@@ -152,7 +278,7 @@ try:
     print
     "Reading of the 'points' file"
     pathAndFileName = pathOpenFoamMesh
-    if pathAndFileName[-1] <> "/":
+    if pathAndFileName[-1] != "/":
         pathAndFileName = pathAndFileName + "/"
     pathAndFileName = pathAndFileName + "points"
     PointsFile = open(pathAndFileName, 'r')
@@ -183,6 +309,8 @@ except:
     print
     "Problem during the 'points' file reading"
     exit(1)
+
+
 
 #
 # 2) "faces" file
@@ -322,7 +450,7 @@ try:
     print
     "nb boundaries =", nb_boundaries
     i = i + 1
-    while (listLinesBoundaryFile[i][0] <> ")"):
+    while (listLinesBoundaryFile[i][0] != ")"):
         i = i + 1
         if (listLinesBoundaryFile[i + 1].__contains__("{") == True):
             nameBoundary = listLinesBoundaryFile[i].replace(" ", "")
@@ -399,7 +527,7 @@ try:
             nb_lateral_faces = 4
             while (len(listLateralFacesOrdered) < nb_lateral_faces):
                 for j in range(2, len(listCells[i])):
-                    if (PointIsInList(j, listLateralFacesOrdered) == False) and (j <> j_indices[1]):
+                    if (PointIsInList(j, listLateralFacesOrdered) == False) and (j != j_indices[1]):
                         if (HaveCommonPoints(listFaces[listCells[i][j]],
                                              listFaces[listCells[i][listLateralFacesOrdered[p]]]) == True):
                             listLateralFacesOrdered.append(j)
@@ -427,7 +555,7 @@ try:
                 j_indices = [0, 0]
                 n = 0
                 for j in range(2):
-                    while (n < 5) and (len(listFaces[listCells[i][n]]) <> 3):
+                    while (n < 5) and (len(listFaces[listCells[i][n]]) != 3):
                         n = n + 1
                     j_indices[j] = n
                     n = n + 1
@@ -441,8 +569,8 @@ try:
                 nb_lateral_faces = 3
                 while (len(listLateralFacesOrdered) < nb_lateral_faces):
                     for j in range(1, len(listCells[i])):
-                        if (PointIsInList(j, listLateralFacesOrdered) == False) and (j <> j_indices[0]) and (
-                                j <> j_indices[1]):
+                        if (PointIsInList(j, listLateralFacesOrdered) == False) and (j != j_indices[0]) and (
+                                j != j_indices[1]):
                             if (HaveCommonPoints(listFaces[listCells[i][j]],
                                                  listFaces[listCells[i][listLateralFacesOrdered[p]]]) == True):
                                 listLateralFacesOrdered.append(j)
@@ -464,7 +592,7 @@ try:
                 j_indices = [0]
                 n = 0
                 for j in range(1):
-                    while (n < 5) and (len(listFaces[listCells[i][n]]) <> 4):
+                    while (n < 5) and (len(listFaces[listCells[i][n]]) != 4):
                         n = n + 1
                     j_indices[j] = n
                 # The serie of points from the square face must be ordered (see VTK format)
@@ -477,7 +605,7 @@ try:
                 nb_lateral_faces = 4
                 while (len(listLateralFacesOrdered) < nb_lateral_faces):
                     for j in range(1, len(listCells[i])):
-                        if (PointIsInList(j, listLateralFacesOrdered) == False) and (j <> j_indices[0]):
+                        if (PointIsInList(j, listLateralFacesOrdered) == False) and (j != j_indices[0]):
                             if (len(CommonPoints(listFaces[listCells[i][j]],
                                                  listFaces[listCells[i][listLateralFacesOrdered[p]]])) == 2):
                                 listLateralFacesOrdered.append(j)
@@ -567,7 +695,7 @@ try:
         for i in range(len(listKeptPoints)):
             listPtsTemp.append([])
             for n in range(3):
-                if (n <> nproj):
+                if (n != nproj):
                     listPtsTemp[-1].append(listPoints[listKeptPoints[i]][n])
         listPoints = listPtsTemp
         nb_points = len(listPoints)
@@ -587,7 +715,7 @@ try:
                                       listPoints[listCellsPoints[i][j + 2]],
                                       listPoints[listCellsPoints[i][j + 3]]) > 0):
                         case = j
-                if (case <> 1):
+                if (case != 1):
                     indexTemp = listCellsPoints[i][case]
                     listCellsPoints[i][case] = listCellsPoints[i][case + 1]
                     listCellsPoints[i][case + 1] = indexTemp
@@ -617,7 +745,7 @@ try:
     print
     "Beginning of the .su2 mesh file writting"
     pathAndFileName = pathSU2Mesh
-    if (pathAndFileName[-1] <> "/"):
+    if (pathAndFileName[-1] != "/"):
         pathAndFileName = pathAndFileName + "/"
     pathAndFileName = pathAndFileName + nameOutputFile
     print
