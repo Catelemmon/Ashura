@@ -7,9 +7,10 @@
 @time: 2019/4/4 上午10:00 
 """
 import codecs
+import gc
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Match
 
 from config.config import PLOYMESH_FILES
 
@@ -52,12 +53,14 @@ def check_count(sline: str):
         return True
     return False
 
+
 def PointIsInList(PointIndex, listPoints):
     PtInsideList = False
     for i in range(len(listPoints)):
         if (PointIndex == listPoints[i]):
             PtInsideList = True
     return PtInsideList
+
 
 def point_in_list(point, points: list):
     """
@@ -68,6 +71,7 @@ def point_in_list(point, points: list):
     :return: 判断是否在里面
     """
     return point in points
+
 
 def HaveCommonPoints(listPoints_1, listPoints_2):
     haveCommonPts = False
@@ -93,12 +97,14 @@ def points_is_crossed(points1, points2):
                 return True
     return False
 
+
 def CommonPoints(listPoints1, listPoints2):
     listCommonPoints = []
     for i in range(len(listPoints1)):
         if (PointIsInList(listPoints1[i], listPoints2) == True):
             listCommonPoints.append(listPoints1[i])
     return listCommonPoints
+
 
 def ask_common_points(points1, points2):
     """
@@ -108,7 +114,7 @@ def ask_common_points(points1, points2):
     :return:
     """
     spoints1 = set(points1)
-    spoints2 =set(points2)
+    spoints2 = set(points2)
     return list(spoints1.intersection(spoints2))
 
 
@@ -145,89 +151,230 @@ class OF2SU2Converter:
     本质也是一个元组, 第一个数字是总共有多少个点, 
     元组内部多个单独数据结构表示点, 类似于 "(x y z)", 代表 x, y, z 轴上的坐标  
     point的索引即faces文件中的pn所映射的点
+    
+    owner:
+    owner文件索引是face(key, 面的编号), 对应的参数是cell(value, 单元编号), 表示一个面对应的cell是哪个cell
+    即 第key个face对应第value个cell
+    PS: owner 包含所有的face假定是m个face, 前面的n个face都是internal face, 剩下的一部分m-n是external face
+    
+    neighbour:
+    neighbour 包含所有的internal face, 假定是n个与owner的前面n个对应
+    索引文件是face(key, 面的编号), 参数是cell(value, 单元编号), 表示一个面对应的cell是哪个cell
+    即 第key个face对应第value个cell
+    
+    boundary:
+    
     """
 
-    def _read_mf(self, fpath):
-        with codecs.open(fpath, mode="r", encoding="utf-8") as mf:
-            pass
-
-    @classmethod
-    def _mesh_slice(cls, data_list: List):
-        for line_num, ldata in enumerate(data_list):
-            if re.match("\d{2, }", ldata):
-                count = int(ldata.strip())
-                start = line_num + 2
-                end = start + count
-                data_list = data_list[start:end]
-        return data_list, count
-
-    @classmethod
-    def _faces_slice(cls, faces_list: List):
-        start = 0
-        has_started = False
-        count = 0
-        # 找start
-        for line_num, ldata in enumerate(faces_list):
-            if re.match("\d{2, }", ldata):
-                count = int(ldata.strip())
-                has_started = True
-                continue
-            if re.match("\d{1, }", ldata) and has_started:
-                start = line_num
-        # 找end
-        for fi in range(len(faces_list), 0, -1):
-            if re.match("\)", faces_list[fi]):
-                end = fi
-        return faces_list[start:end], count
-
-    @classmethod
-    def _read_points(cls, points_path):
-        lpoints = []  # 点的list
-        with codecs.open(points_path, mode="r", encoding="utf-8") as pf:
-            for pline in pf:
-                lpoints.append(pline)
-
-        # slice
-        lpoints, pcount = cls._mesh_slice(lpoints)
-
-        for pindex, item in enumerate(lpoints):
-            rm_brackets = re.sub("[\(|\)]", "", item)
-            lpoints[pindex] = tuple(rm_brackets.split(" "))
-        spoints = set(lpoints)
-        points_dic = {
-            "pcount": pcount,
-            "lpoints": lpoints,
-            "spoints": spoints
-        }
-        return points_dic
-
-    @classmethod
-    def _read_faces(cls, faces_path):
-        lfaces = []  # face的list
-        with codecs.open(faces_path, mode="r", encoding="utf-8") as ff:
-            for fline in ff:
-                lfaces.append(fline)
-
-        # slice
-        lfaces, fcount = cls._faces_slice(lfaces)
-
-        # TODO 使用正则表达式来解析faces
-        """ ^\d{1,2}[\s\r\n]*?\([\s\S]+?\) """ # 解析每个小的元素
-        """ ^\d{2,}[\r\n]\( """ # 解析总数
-
-
-
-
-
-
-    def _mt_readmesh(self):
+    def _read_sfile(self, name):
         """
-        多线程读openfoam的网格
+        读取数据文件并返回字符串
+        """
+        file_path = Path(self.ployMesh_path, name)
+        with codecs.open(file_path, mode="r", encoding="utf-8") as f:
+            return f.read()
+
+    @classmethod
+    def _match_counts(cls, s_data):
+        """
+        匹配总的计数
+        :param s_data: 字符串数据
         :return:
         """
-        for mf_name in PLOYMESH_FILES:
-            # 遍历目标的网格文件
-            pass
+        count_pt = re.compile("^(\d{1,})[\r\n\s]*\(")
+        return re.search(count_pt, s_data).group(1)
+
+    @classmethod
+    def _match_faces_points(cls, s_data):
+        """
+        匹配面和点的每一组匹配的数据
+        :param s_data:
+        :return:
+        """
+        pt = re.compile("^\d{1,2}[\s\r\n]*?\([\s\S]+?\)")
+        shear = re.compile("\(|\)")
+
+        for piece in re.finditer(pt, s_data):
+            piece: str
+            res: str = re.sub(shear, ' ', piece)
+            yield res.split()
+
+    @classmethod
+    def _match_three_type(cls, s_data):
+        """
+        返回数据的整体
+        :param s_data: 文件的字符串
+        :return:
+        """
+        pt = "^\d{1,}[\s\r\n]*\([\s\S]*\)"
+        return re.search(pt, s_data).group(0)
+
+    def _faces_parse(self, name="faces"):
+        """
+        解析faces文件返回一个字典
+        :param name:
+        :return: dict
+        {
+            face_count : face的总的数目
+            faces: face集合 []
+            {
+                ploygon: 几边形
+                point_mapping: 对应点 tuple
+            }
+        }
+        """
+        sfaces = self._read_sfile(name)
+        face_count = self._match_counts(sfaces)
+        faces = []
+        face_d = {
+            "face_count": face_count,
+            "faces": faces
+        }
+        for face in self._match_faces_points(sfaces):
+            face: list
+            faces.append({"polygon": face[0], "point_mapping": tuple([int(p) for p in face[1:]])})
+        del sfaces  # 回收字符串
+        gc.collect()
+        return face_d
+
+    def _points_parse(self, name="points"):
+        """解析点文件
+        :param name: 网格文件
+        :return: dict
+        {
+            point_count: 点的总数目
+            points: point的集合, 列表
+            (x, y, z) 坐标
+        }
+        """
+        spoints = self._read_sfile(name)
+        point_count = self._match_counts(spoints)
+        points = []
+        points_d = {
+            "point_count": point_count,
+            "points": points
+        }
+        for point in self._match_faces_points(spoints):
+            point: list
+            points.append(tuple(point))
+        del spoints
+        gc.collect()
+        return points_d
+
+    def _owner_parse(self, name="owner"):
+        """
+        解析owner文件, 并将cell存储为一个二维矩阵
+        :param name: 文件名称
+        :return:
+        {
+            cells_infos: list  包含 "nPoints", "nCells", "nFaces", "nInternalFaces"
+            cells_matrix: cell的二维矩阵
+        }
+        """
+        # 匹配cell的信息
+        sowner = self._read_sfile(name)
+        cells_infos = ["nPoints", "nCells", "nFaces", "nInternalFaces"]
+        cell_dinfo = {}
+        for face_key in cells_infos:
+            cell_dinfo[face_key] = int(re.search(f"{face_key}:\s+?(\d+)[\s\"]", sowner).group(1))
+
+        cells_matrix = []
+        for i in cell_dinfo["nCells"]:
+            cells_matrix.append([])
+
+        cells_list = re.search("\([\s\r\n]*[\s\S]+?\)", sowner).group(0)[1:-1].split()
+        del sowner
+        gc.collect()
+        for f_index, cell in enumerate(cells_list):
+            cells_matrix[cell].append(f_index)
+
+        del cells_list
+        gc.collect()
+        cells = {"cell_dinfo": cell_dinfo, "cells_matrix": cells_matrix}
+        return cells
+
+    def _neighbour_parse(self, name="neighbour"):
+
+        """
+        解析neighbour文件
+        :param name: 文件名
+        :return:
+        {
+            "if_count": int internal face的数量
+            "ncells": list cell的列表
+        }
+        """
+
+        sneigh = self._read_sfile(name)
+        if_count = self._match_counts(sneigh)
+        # ic_count internal cell
+
+        ncells = re.search("^\([\s\r\n]*(\d[\s\n\r]*?)+?\)", sneigh).group(0)[1:-1].split()
+        cell_d = {"if_count": if_count, "ncells": ncells}
+        return cell_d
+
+    def _boundary_parse(self, name="boundary"):
+        """
+        解析bounary文件
+        :param name:  文件名
+        :return:
+        {
+            "bound_count": 边界条件的数量
+            "boundaries": list[dict] 边界条件的列表
+            属性可以通过dicr访问, 名字为bound_name
+        }
+        """
+        sbound = self._read_sfile(name)
+        bound_count = self._match_counts(sbound)
+        sbound = re.search("\([\s\r\n]*[\s\S]+?\)", sbound).group(0)[1:-1]
+        bounds = re.finditer("[A-z]+[\s\r\n]*?\{[\s\S]+?\}", sbound)
+        l_bounds = []
+        # boundary list
+        for bound in bounds:
+            lines = bound.group().split(sep="\r")
+            bound_name = lines[0].strip()
+            lines = lines[2:-1]
+            sind_bound = {"bound_name": bound_name}
+            # single_dict_boundary
+            for line in lines:
+                l_value, r_value = line.split()
+                r_value = re.sub(";", "", r_value)
+                sind_bound[l_value] = r_value
+            l_bounds.append(sind_bound)
+        return {
+            "bound_count": bound_count,
+            "boundaries": l_bounds
+        }
+
+    def _fill_face(self, owner_info, neighbour_info):
+        cells_matrix: List[List] = owner_info["cells_matrix"]
+        ncells: List = neighbour_info["ncells"]
+        for iface, cell in enumerate(ncells):
+            cells_matrix[cell].append(iface)
+        return owner_info
+
+    def ploymesh_read(self):
+        # TODO: 实现多进程
+        faces_info = self._faces_parse()
+        points_info = self._points_parse()
+        owner_info = self._owner_parse()
+        neighbour_info = self._neighbour_parse()
+        boundary_info = self._boundary_parse()
+
+        cell_info = self._fill_face(owner_info, neighbour_info)
+        del owner_info
+        del neighbour_info
+        gc.collect()
+        return {
+            "faces_info": faces_info,
+            "points_info": points_info,
+            "cell_info": cell_info,
+            "boundary_info": boundary_info
+        }
+
+    def covert(self):
+        of_minfo = self.ploymesh_read()
+
 
 # =========================
 # Reading of the input file
@@ -309,8 +456,6 @@ except:
     print
     "Problem during the 'points' file reading"
     exit(1)
-
-
 
 #
 # 2) "faces" file
@@ -485,7 +630,7 @@ except:
 # ====================================================================
 #
 # The cell format is given in http://adl.stanford.edu/docs/display/SUSQUARED/Mesh+files
-# and in http://www.vtk.org/VTK/img/file-formats.pdf page 9
+# and in http://www.vtk.org/VTK/img/file-formats.pdf page
 # (both are necessary)
 #
 
@@ -494,11 +639,14 @@ try:
     "Beginning of the format conversion process"
     # Initialization
     # Gives the correspondances "nb points in element" => "VTK format number associated"
+
+    # SU2里面的类型定义
     listKind1DElements = {2: 3}  # Segments
     listKind2DElements = {3: 5, 4: 9}  # Triangles and quads
     listKind3DElements = {4: 10, 5: 14, 6: 13, 8: 12}  # Tetras, pyramids, prisms and hexas
     listKindElements = {"1D": listKind1DElements, "2D": listKind2DElements, "3D": listKind3DElements}
 
+    # cell的点矩阵
     listCellsPoints = []
     for i in range(nb_cells):
         listCellsPoints.append([])
@@ -507,15 +655,20 @@ try:
     q = 1
     for i in range(nb_cells):
         if (i == q * nb_cells / 10):
+            # 就是只是想计数看弄到百分之几了
             print
             "Conversion progress:", 10 * q, "% done"
             q = q + 1
         if (len(listCells[i]) == 6):
+            # 如果是六面体的时候
             # Hexaedron cell
             # To get all the points, two opposite faces are selected
             j_indices = [0, 1]
             while (j_indices[1] < len(listCells[i])) and (
-            HaveCommonPoints(listFaces[listCells[i][j_indices[0]]], listFaces[listCells[i][j_indices[1]]])):
+                    HaveCommonPoints(listFaces[listCells[i][j_indices[0]]], listFaces[listCells[i][j_indices[1]]])):
+                    # 当j_indices[1] 是小于这个六面体的面数的时候
+                    # 遍历第i个cell的所有面
+                    # 且这个cell的第零个面和另外的几个面都没有共同的点的时候
                 j_indices[1] = j_indices[1] + 1
             # The two series of points from the two faces must be ordered (see VTK format)
             listLateralFacesOrdered = []
@@ -565,6 +718,7 @@ try:
                 while (j_indices[0] == j0) or (j_indices[1] == j0):
                     j0 = j0 + 1
                 p = 0
+                #  TODO 这里存在异常跳出的问题
                 listLateralFacesOrdered.append(j0)
                 nb_lateral_faces = 3
                 while (len(listLateralFacesOrdered) < nb_lateral_faces):
@@ -806,4 +960,3 @@ except:
     OutputFile.close()
     print
     "Problem during the .su2 mesh file writting"
-
