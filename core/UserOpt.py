@@ -7,6 +7,7 @@
 @time: 2019/4/1 上午9:25 
 """
 import os
+import subprocess
 from pathlib import Path
 
 from config.local_settings import HOMES_PATH, SUDO_PW, DEFAULT_PW
@@ -23,29 +24,14 @@ class UserOpt:
     """
 
     @classmethod
-    def _mkdir_ashome(cls, user_name, homes_path=HOMES_PATH):
-        """
-        创建user的家目录
-        :param user_name: 用户名
-        :param homes_path: 创建家目录的路径
-        :return:
-        """
-        uh = Path(homes_path).joinpath(user_name)
-        os.system(f"echo {SUDO_PW} | sudo -S mkdir {str(uh)} >> {out_log}")
-        return str(uh)
-
-    @classmethod
-    def add_user(cls, user_name, password=DEFAULT_PW, home_dir=None):
+    def add_user(cls, user_name, password=DEFAULT_PW):
         """
         添加用户并初始化初始密码
         :param user_name: 用户名
         :param password: 密码
-        :param home_dir: 家目录
         :return:
         """
-        if home_dir is None:
-            uh = cls._mkdir_ashome(user_name)
-        os.system(f"echo {SUDO_PW} | sudo -S useradd {user_name} -d {uh} >> {out_log}")
+        os.system(f"echo {SUDO_PW} | sudo -S useradd {user_name} -m >> {out_log}")
         cls.passwd_user(user_name, password)
 
     @classmethod
@@ -69,4 +55,8 @@ class UserOpt:
 
     @classmethod
     def passwd_user(cls, user_name, passwd):
-        os.system(f'echo -e "{passwd}\n{passwd}" | echo {SUDO_PW} | sudo -S passwd {user_name} >> {out_log}')
+        # TODO: 暂时不可以实现密码可以定义
+        with subprocess.Popen([f"sudo passwd {user_name}"],
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE) as proc:
+            stdout, stdin = proc.communicate(b"09170725")
+            pass

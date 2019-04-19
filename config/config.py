@@ -8,7 +8,7 @@
 """
 
 
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 CAE_APPLICATION_TYPE = (
     "OpenFoam",
@@ -22,3 +22,13 @@ BASE_DIR = Path.cwd().parent
 
 LAUNCH_BEHOLDER = True
 
+PLOYMESH_FILES = (
+    "boundary",
+    "faces",
+    "neighbour",
+    "owner",
+    "points"
+)
+
+# TODO: pkguil
+DEFAULT_SERVER = "HttpServer."

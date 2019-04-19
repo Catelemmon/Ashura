@@ -19,6 +19,7 @@ logger = get_logger(logger_name="core")
 
 
 class MeshBase:
+    
     def __new__(cls, workpath, is_upload=False, upload_mtype="OpenFoam", **kwargs):
         """
         创建一个Mesh
@@ -57,7 +58,7 @@ class MeshBase:
     @classmethod
     def _init(cls, workpath, is_upload=False, upload_mtype="OpenFoam", **kwargs):
         self = object.__new__(cls)
-        self.workpath = workpath
+        self.workpath == workpath
         self.is_upload = is_upload
         self.upload_mtype = upload_mtype
         self._parse_args(kwargs)

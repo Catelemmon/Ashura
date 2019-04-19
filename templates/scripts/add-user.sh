@@ -11,6 +11,8 @@ echo "$DATE adding user ${USER}!"
 useradd ${USER} -m
 echo "$DATE setting user ${USER}'s password!"
 echo "$USER:$PASSWD" | chpasswd
+DATE=`date "+%Y-%m-%d %H:%M:%S"`
+echo "$DATE creating user public key pair!"
 su ${USER}<<EOF
 /usr/bin/expect
 spawn ssh-keygen
@@ -28,7 +30,7 @@ expect eof
 exit
 EOF
 echo "$DATE add user: $USER successfully!"
-#make -C /var/yp
+make -C /var/yp
 else
 echo "$DATE the user $USER has been existed!"
 fi
