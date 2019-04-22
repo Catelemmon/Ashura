@@ -12,14 +12,15 @@ from abc import abstractmethod
 class Scheduler:
 
     @abstractmethod
-    def render_script(self):
+    @classmethod
+    def render_script(self, ):
         """
         渲染调度系统执行的脚本
         :return:
         """
         pass
 
-    @abstractmethod
+    @classmethod
     def create_job(self):
         """
         创建job
@@ -28,6 +29,7 @@ class Scheduler:
         pass
 
     @abstractmethod
+    @classmethod
     def data_parse(self):
         """
         参数处理

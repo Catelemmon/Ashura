@@ -3,7 +3,7 @@
 """
 @author: cicada
 @contact: 1713856662a@gmail.com
-@file: config.py
+@file: configs.py
 @time: 19-3-28 上午11:44 
 """
 
@@ -29,6 +29,3 @@ PLOYMESH_FILES = (
     "owner",
     "points"
 )
-
-# TODO: pkguil
-DEFAULT_SERVER = "HttpServer."

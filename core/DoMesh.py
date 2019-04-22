@@ -3,14 +3,14 @@
 """
 @author: cicada
 @contact: 1713856662a@gmail.com
-@file: Mesh.py
+@file: DoMesh.py
 @time: 19-3-28 上午11:06 
 """
 import codecs
 from pathlib import Path
 
 
-from config.config import CAE_APPLICATION_TYPE
+from configs.config import CAE_APPLICATION_TYPE
 from utils.log_utils import get_logger
 
 
@@ -39,7 +39,7 @@ class MeshOpt:
             if not Path(workpath).is_absolute():
                 raise ValueError("mesh path must be a absolute path!")
             if upload_mtype not in CAE_APPLICATION_TYPE:
-                raise ValueError("the type must be in CAE_APPLICATION_TYPE from config!")
+                raise ValueError("the type must be in CAE_APPLICATION_TYPE from configs!")
             return True
         except ValueError:
             logger.exception()

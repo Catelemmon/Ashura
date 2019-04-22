@@ -9,7 +9,7 @@
 
 from pathlib import PurePosixPath, Path
 
-from config.config import BASE_DIR
+from configs.config import BASE_DIR
 
 # 需要监控的目录
 watch_dir = "templates"

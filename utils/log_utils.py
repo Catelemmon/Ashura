@@ -9,8 +9,8 @@
 
 from pathlib import PurePosixPath
 from functools import wraps
-from config.local_settings import LOG_SYS
-from config.local_settings import LOG_DIR
+from configs.local_settings import LOG_SYS
+from configs.local_settings import LOG_DIR
 
 import logging
 from logging import DEBUG

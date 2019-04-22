@@ -95,7 +95,6 @@ class Foam2SU2Converter(object):
     @classmethod
     def _capture_surface(cls, foam):
         ExtractSurface(Input=foam)
-        # TODO 修改这里为updatePipeLineInfomation
         UpdatePipeline()
         sour_dict = GetSources()
         for sour_key, obj in sour_dict.items():

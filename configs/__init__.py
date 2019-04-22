@@ -8,9 +8,9 @@
 """
 
 try:
-    from config.local_settings import *
+    from configs.local_settings import *
 except ImportError:
-    from config.online_settings import *
+    from configs.online_settings import *
 
-from config.config import *
+from configs.config import *
 

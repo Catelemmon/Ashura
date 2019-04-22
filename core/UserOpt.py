@@ -10,7 +10,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from config.local_settings import HOMES_PATH, SUDO_PW, DEFAULT_PW
+from configs.local_settings import HOMES_PATH, SUDO_PW, DEFAULT_PW
 
 out_log = "out_log.log"
 

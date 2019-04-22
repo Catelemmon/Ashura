@@ -2,3 +2,4 @@
 /log/
 /tests/
 /.vscode/
+configs/online_settings.py

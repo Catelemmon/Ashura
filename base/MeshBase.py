@@ -11,7 +11,7 @@ import codecs
 from pathlib import Path
 
 
-from config.config import CAE_APPLICATION_TYPE
+from configs.config import CAE_APPLICATION_TYPE
 from utils.log_utils import get_logger
 
 
@@ -40,7 +40,7 @@ class MeshBase:
             if not Path(workpath).is_absolute():
                 raise ValueError("mesh path must be a absolute path!")
             if upload_mtype not in CAE_APPLICATION_TYPE:
-                raise ValueError("the type must be in CAE_APPLICATION_TYPE from config!")
+                raise ValueError("the type must be in CAE_APPLICATION_TYPE from configs!")
             return True
         except ValueError:
             logger.exception()
