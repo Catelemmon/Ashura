@@ -18,7 +18,7 @@ class AshuraServer(object):
         # 构建不同的服务器 HTTP服务或者是rpc
         # hooks是为了启动其他的相关服务
 
-        mdl = import_module(server_type, package="service")
+        mdl = import_module(server_type, package="servers")
         cls = getattr(mdl, server_type)
         self = cls._from_parts(kwargs)
         self.hooks = hooks

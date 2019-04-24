@@ -7,7 +7,7 @@
 @time: 2019/4/22 下午5:23 
 """
 
-from service.AshuraServer import AshuraServer
+from servers.AshuraServer import AshuraServer
 
 server = AshuraServer(host="0.0.0.0", port=5000, is_debug=True)
 
