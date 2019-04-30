@@ -7,6 +7,6 @@
 @time: 19-3-28 上午11:33 
 """
 
+from monitor.WorkDirMonitor import WorkDirMonitor
 
-
-
+fm = WorkDirMonitor()

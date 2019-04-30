@@ -18,7 +18,7 @@ def start_observer(observer):
     observer.join()
 
 
-class FileMonitor(object):
+class WorkDirMonitor(object):
 
     def __init__(self):
         self.watchers = {}
@@ -31,7 +31,7 @@ class FileMonitor(object):
         if "recursive" in params:
             params.pop("recursive")
         observer = Observer()
-        observer.schedule(handler(), path, recursive=is_recursive)
+        observer.schedule(handler, path, recursive=is_recursive)
         watcher_p = Process(target=start_observer_func, args=(observer, ), kwargs=params)
         watcher_p.start()
         self.watchers[path] = watcher_p.pid

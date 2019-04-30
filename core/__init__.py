@@ -7,6 +7,10 @@
 @time: 19-3-27 下午5:36 
 """
 
-
+RESULTS_TEMPLATE = {
+    "code": None,
+    "msg": None,
+    "results": None
+}
 
 

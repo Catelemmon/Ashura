@@ -6,71 +6,55 @@
 @file: foam_mesh2SU2.py
 @time: 2019/4/11 上午11:50 
 """
-import codecs
+
+import os, re, codecs
+from typing import Callable
 
 from paraview.simple import *
-import os
-import re
-import gc
 
+MARKER_TYPE_ENUM = {  # SU2里面的Marker就是vtk文件中的ploydata即面网格, openfoam的boundary
+    2: 3,  # 两个点是一条线
+    3: 5,  # 三个点是三角形
+    4: 9,  # 四边形
+}
 
-class Foam2SU2Converter(object):
-    __slots__ = ('foam_file', 'su2_file', 'mesh_dim', 'point_map', 'do_convert')
+ELEM_TYPE_ENUM = {  # SU2里面的ELEM就是vtk文件中的UNSTRUCTURED_GRID即体网格, openfoam的cell
+    4: 10,  # 四个点是四面体
+    8: 12,  # 八个点是六面体
+    6: 13,  # 六个点是棱镜
+    5: 14,  # 五个点是金字塔(五面体)
+}
+
+class Foam2SU2Converter:
+
+    __slots__ = ('foam_file', 'su2_file', 'mesh_dim', 'point_map')
 
     def __init__(self, foam_file, su2_mname, su2_mdir, mesh_dim="3D"):
         self.foam_file = foam_file
-        su2_file_path = os.path.join(su2_mdir, su2_mname + ".su2")
+        su2_file_path = os.path.join(su2_mdir, su2_mname+".su2")
         self.su2_file = codecs.open(su2_file_path, encoding="utf-8", mode="a")
         self.mesh_dim = mesh_dim[0]
-        self.point_map = {}
+        self.point_map = {}  # 存储点的一个反序列
         if mesh_dim == "3D":
-            self.do_convert = self.convert3d
+            self.do_convert = self.convert3D
         elif mesh_dim == "2D":
-            self.do_convert = self.convert2d
+            self.do_convert = self.convert2D
         else:
             raise ValueError("mesh_dim is not a correct value! ")
 
-    def convert3d(self):
+    def convert3D(self):
 
         foam = self._read_foam()
-        foam.MeshRegions = foam.MeshRegions.GetAvailable()
-        print("得到surface")
-        surface = self._capture_surface(foam)  # 提取surface
-        print("得到surface的原生对象")
-        surface_vtk = self._vtk_agent(surface)  # 提取surface的原生vtk对象
-        print("得到vtk的原生对象")
+        foam = self._capture_meshs(foam)
         vtk_agent = self._vtk_agent(foam)
-        print("得到internal mesh")
-        inter_mesh = self._inter_mesh(vtk_agent)
-        print("读取boundary mesh的名字")
-        bm_names = self._bm_names(foam, vtk_agent)  # 获取所有的boundary的名字
+        inter_mesh, bmeshes = self._meshes(vtk_agent)
+        bm_names = self._bm_names(foam, vtk_agent)
         Delete(foam)
-        Delete(surface)
-        del vtk_agent, surface, foam
+        del vtk_agent
+        self._write_su2(inter_mesh, bmeshes, bm_names)
+        pass
 
-        # 写入inter_mesh
-        self.su2_file.write("NDIME= {}\n".format(self.mesh_dim))  # 写入网格维度
-        self._write_inter_mesh(inter_mesh)
-        print("完成写入cell mesh")
-        self._write_im_points(inter_mesh)
-        print("完成写入cell mesh中的点")
-        del inter_mesh  # 回收inter_mesh对象
-        gc.collect()
-
-        # cell surface block 体网格拆面
-        cs_block, mp_blocks = self._poly_blocks(surface_vtk)
-        del surface_vtk
-        gc.collect()
-        # cell surface block |  poly multiple block
-        pp_sets = self._poly_points_sets(mp_blocks)  # 构造所有的boundary的点集列表
-
-        self._write_markers(cs_block, pp_sets, bm_names)
-        del cs_block, pp_sets, bm_names
-        gc.collect()
-
-        return None
-
-    def convert2d(self):
+    def convert2D(self):
         # 业务暂时不需要
         pass
 
@@ -78,61 +62,47 @@ class Foam2SU2Converter(object):
         foam = OpenFOAMReader(FileName=self.foam_file)
         return foam
 
-    @classmethod
-    def _poly_blocks(cls, surface_vtk):
-        s_blocks = surface_vtk.GetOutputDataObject(0)  # surface blocks
-        cs_block, mp_block = s_blocks.GetBlock(0), s_blocks.GetBlock(1)
-        # cell surface block | poly multiple block
+    def _capture_meshs(self, foam):
+        foam.MeshRegions = foam.MeshRegions.GetAvailable()
+        return foam
 
-        mp_blocks = []
-        for mpi in xrange(mp_block.GetNumberOfBlocks()):
-            mp_blocks.append(mp_block.GetBlock(mpi))
-        del s_blocks
-        gc.collect()
-        print("完成读取cell surface block 和 multiple poly block")
-        return cs_block, mp_blocks
-
-    @classmethod
-    def _capture_surface(cls, foam):
-        ExtractSurface(Input=foam)
-        UpdatePipeline()
-        sour_dict = GetSources()
-        for sour_key, obj in sour_dict.items():
-            sour_name, rid = sour_key
-            if "ExtractSurface" in sour_name:
-                return sour_dict[sour_key]
-        return None
-
-    @classmethod
-    def _vtk_agent(cls, foam_obj):
-        # 从foam_obj中获取vtk原生的数据结构-vtkOpenFoamReader
-        vtk_agent = foam_obj.SMProxy.GetClientSideObject()
+    def _vtk_agent(self, foam):
+        # 获取vtk原生的数据结构-vtkOpenFoamReader
+        # 接下来的很多东西都是从这里面读取
+        vtk_agent = foam.SMProxy.GetClientSideObject()
         return vtk_agent
 
-    @classmethod
-    def _inter_mesh(cls, vtk_agent):
+    def _meshes(self, vtk_agent):
         # 返回blocks(meshes)
         vtk_info = vtk_agent.GetOutput()
         vtk_agent.Update()
-        inter_mesh = vtk_info.GetBlock(0)
-        return inter_mesh
+        bmeshes = []
+        inter_mesh, bound_mesh = vtk_info.GetBlock(0), vtk_info.GetBlock(1)
+        bound_mesh_num = bound_mesh.GetNumberOfBlocks()
+        for i in xrange(bound_mesh_num):
+            bmeshes.append(bound_mesh.GetBlock(i))
+        return inter_mesh, bmeshes
 
-    @classmethod
-    def _bm_names(cls, foam, vtk_agent):
+    def _bm_names(self, foam ,vtk_agent):
         # 返回boundary mesh的名字
         # 可以和block对应上
         bm_names = {}
         try:
             bms = vtk_agent.GetNumberOfPatchArrays()
             for bmi in bms:
-                bm_names[bmi] = vtk_agent.GetPatchArrayName(bmi)
+                 bm_names[bmi] = vtk_agent.GetPatchArrayName(bmi)
         except Exception:
             bms = foam.MeshRegions.GetAvailable()[1:]
             for bmi, bm in enumerate(bms):
                 bm_names[bmi] = bm
-        del bms
-        gc.collect()
         return bm_names
+
+    def _write_su2(self, inter_mesh, bmeshs, bm_names):
+        self.su2_file.write("NDIME= {}\n".format(self.mesh_dim))  # 写入网格维度
+        self._write_inter_mesh(inter_mesh)
+        self._write_im_points(inter_mesh)  # 写入点文件并建立点文件的映射
+        del inter_mesh
+        self._write_markers(bmeshs, bm_names)
 
     def _write_inter_mesh(self, inter_mesh):
         lp = re.compile("[\[\],L]")  # list pattern
@@ -153,89 +123,46 @@ class Foam2SU2Converter(object):
 
         self.su2_file.write("NPOIN= {}\n".format(imp_num))  # 写入总的点数
 
-        psp = re.compile(r"[(),]")
+        psp = re.compile("[\(\),]")
         for pc in xrange(imp_num):
             point = inter_mesh.GetPoint(pc)
             self.point_map[point] = pc  # 对点进行反向映射
             ps = re.sub(psp, "", str(point))
-            self.su2_file.write(ps + " {}".format(pc) + "\n")
+            self.su2_file.write(ps+" {}".format(pc)+"\n")
         return imp_num
 
-    @classmethod
-    def _poly_points_sets(cls, mp_blocks):
-        pp_sets = []
-        for mpb in mp_blocks:
-            pps = set()
-            for pi in xrange(mpb.GetNumberOfPoints()):
-                pps.add(mpb.GetPoint(pi))
-            pp_sets.append(pps)
-        return pp_sets
+    def _write_markers(self, bmeshes, bm_names):
+        self.su2_file.write("NMARK= {}\n".format(len(bmeshes)))  # 写入NMARK
+        lp = re.compile("[\[\],]")  # list pattern
 
-    @classmethod
-    def _in_pointset(cls, points, mpp_sets):
-        flag = False
-        for mppi, mpps in enumerate(mpp_sets):
-            for p in points:
-                if p in mpps:
-                    flag = True
-                    continue
-                else:
-                    flag = False
-                    break
-            if flag:
-                return mppi
-            else:
-                continue
-        print("没有找到对应的点")
-        return None
+        for bmi, bm in enumerate(bmeshes):
+            #  遍历所有的面网格(boundary网格)
+            self.su2_file.write("MARKER_TAG= {}\n".format(bm_names[bmi]))  # 输出这个网格的名字
+            bm_polynum = bm.GetNumberOfCells()  # boundary网格总共有多少个
+            self.su2_file.write("MARKER_ELEMS= {}\n".format(bm_polynum))  # 输出网格总共多少个poly(cell, elems)
+            for pc in xrange(bm_polynum):  # 遍历所有的poly
+                poly = bm.GetCell(pc)  # 获取一个poly
+                poly_type = poly.GetCellType()  # 获取poly的type
+                pp_num = poly.GetNumberOfPoints()  # 获取poly的点数
+                points = []
+                for ppi in xrange(pp_num):  # 遍历poly所有的点
+                    pt_id = poly.GetPointId(ppi)
 
-    def _write_markers(self, cs_block, mpp_sets, bm_names):
-        bm_number = len(bm_names)
-        self.su2_file.write("NMARK= {}\n".format(bm_number))  # 写入NMARK
-        lp = re.compile("[\[\],L]")  # list pattern
-
-        boundary_dict = {bm_names[bm_name]: [] for bm_name in bm_names.keys()}
-
-        # classfication 对点所属的boundary进行分类
-
-        for pl_i in xrange(cs_block.GetNumberOfCells()):
-            # poly index 遍历所有的poly
-            poly = cs_block.GetCell(pl_i)
-            poly_type = poly.GetCellType()  # 获取poly的模型
-            poly_points_id = []  # 网格point的id列表
-            poly_points = []  # 网格的点, 坐标集合
-            for ppi in xrange(poly.GetNumberOfPoints()):
-                # poly point index
-                # 得到一个poly的所有点
-                pt_id = poly.GetPointId(ppi)  #
-                poly_points_id.append(pt_id)
-                poly_points.append(cs_block.GetPoint(pt_id))
-
-            multi_poly_index = self._in_pointset(poly_points, mpp_sets)
-
-            # 访问反向映射, 构建新的点坐标
-            poly_points_id = [self.point_map[pp] for pp in poly_points]
-
-            pl = re.sub(lp, "", str(poly_points_id))
-            belong_boundary = bm_names[multi_poly_index]
-            poly_str = "{poly_type} {point_list} {poly_count}\n".format(poly_type=poly_type, point_list=pl,
-                                                                        poly_count=len(boundary_dict[belong_boundary]))
-            boundary_dict[belong_boundary].append(poly_str)  # 添加一个cell的str
-
-        for boundary_name in boundary_dict.keys():
-            self.su2_file.write("MARKER_TAG= {}\n".format(boundary_name))
-            polys = boundary_dict[boundary_name]
-            self.su2_file.write("MARKER_ELEMS= {}\n".format(len(polys)))
-            for poly in polys:
-                self.su2_file.write(poly)
-            del boundary_dict[boundary_name]
-            gc.collect()
-
+                    # 访问反向映射, 构造新的点
+                    point = bm.GetPoint(pt_id)
+                    pt_id = self.point_map.get(point, -1)
+                    if pt_id is -1:
+                        print "没有取到对应的点"
+                    points.append(pt_id)
+                pl = re.sub(lp, "", str(points))
+                poly_str = "{poly_type} {point_list} {poly_count}\n".format(poly_type=poly_type,
+                                                                          point_list=pl, poly_count=pc)
+                self.su2_file.write(poly_str)
 
 if __name__ == '__main__':
     # case_dir = "/home/cicada/workspace/paraview_workspace/Semi_Trailer_Truck_finemesh/case.foam"
-    case_dir = "/home/cicada/workspace/paraview_workspace/rae2822Square/case.foam"
+    case_dir = "/home/cicada/workspace/paraview_workspace/rae2822Square_luo/case.foam"
     # case_dir = "/home/cicada/workspace/paraview_workspace/airplot/airplot.foam"
     cwd = os.getcwd()
-    of2su2c = Foam2SU2Converter(foam_file=case_dir, su2_mname="rae2822Square", su2_mdir=cwd)
+    of2su2c = Foam2SU2Converter(foam_file=case_dir, su2_mname="rae2822Square_luo", su2_mdir=cwd)
     of2su2c.do_convert()

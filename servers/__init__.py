@@ -6,11 +6,7 @@
 @file: __init__.py.py
 @time: 19-3-27 下午5:38 
 """
-from servers.AshuraServer import AshuraServer
-
-
-def create_server(*args, **kwargs):
-    server = AshuraServer(*args, **kwargs)
-    return server
+from servers.AshuraServer import *
+from servers.HttpServer import *
 
 

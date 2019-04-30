@@ -11,9 +11,13 @@ from abc import abstractmethod
 
 class Scheduler:
 
-    @abstractmethod
+    # TODO 有待重构
+
+    def __new__(cls, *args, **kwargs):
+        return object.__new__(cls)
+
     @classmethod
-    def render_script(self, ):
+    def render_script(self):
         """
         渲染调度系统执行的脚本
         :return:
@@ -29,7 +33,6 @@ class Scheduler:
         pass
 
     @abstractmethod
-    @classmethod
     def data_parse(self):
         """
         参数处理
@@ -37,8 +40,8 @@ class Scheduler:
         """
         pass
 
-    @abstractmethod
-    def send_job(self):
+    @classmethod
+    def send_job(cls, work_dir):
         """
         发送作业
         :return:
