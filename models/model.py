@@ -17,28 +17,28 @@ from sqlalchemy.orm import sessionmaker
 ModelBase = declarative_base()
 
 
-class Job(ModelBase):
+class Solve(ModelBase):
 
-    __tablename__ = "job"
+    __tablename__ = "solve"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    path = Column(String, nullable=False)  # job的工作路径
+    path = Column(String, nullable=False)  # 仿真的工作路径
     mesh_path = Column(String, nullable=False)  # 网格文件的路径
-    user_name = Column(String, default="middleware")  # 创建job的用户
+    user_name = Column(String, default="middleware")  # 创建solve_job的用户
     solve_app = Column(Integer, default=0)  # 默认是su2
     solve_config = Column(String, nullable=False)  # 配置文件路径
     launch_script = Column(String, nullable=False)  # 启动脚本
     create_time = Column(DateTime, default=datetime.now())  # 作业的创建时间
 
 
-class JobStatus(ModelBase):
+class SolveStatus(ModelBase):
 
-    __tablename__ = "job_status"
+    __tablename__ = "solve_status"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    job_id = Column(Integer, nullable=False)  # job的id
-    core_num = Column(Integer, nullable=False)  # job使用的cpu核数
-    slurm_id = Column(Integer, nullable=False)  # 创建job后slurm的id号
+    solve_job_id = Column(Integer, nullable=False)  # solve_job的id
+    core_num = Column(Integer, nullable=False)  # solve_job使用的cpu核数
+    slurm_id = Column(Integer, nullable=False)  # 创建solve_job后slurm的id号
     slurm_status = Column(Integer, nullable=False)  # PENDING R FAILED COMPLETE CANCELED
     total_step = Column(Integer, nullable=False)  # 总共的步骤
     current_step = Column(Integer, nullable=False)  # 当前的步骤
@@ -46,7 +46,7 @@ class JobStatus(ModelBase):
     error_file = Column(String, nullable=False)  # 错误输出的文件
 
 
-class JobResults(ModelBase):
+class SolveResults(ModelBase):
 
     __tablename__ = "job_results"
 
@@ -56,9 +56,10 @@ class JobResults(ModelBase):
     create_time = Column(DateTime, default=datetime.now())  # 结果创建的时间
 
 
-class JobChart(ModelBase):
+class SolveChart(ModelBase):
 
     __tablename__ = "job_chart"
+
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     job_id = Column(Integer, primary_key=True, )  # 作业的id
