@@ -17,14 +17,6 @@ class Scheduler:
         return object.__new__(cls)
 
     @classmethod
-    def render_script(self):
-        """
-        渲染调度系统执行的脚本
-        :return:
-        """
-        pass
-
-    @classmethod
     def create_job(self):
         """
         创建job
@@ -57,7 +49,7 @@ class Scheduler:
         pass
 
     @abstractmethod
-    def kill_job(self):
+    def kill_job(self, **kwargs):
         """
         杀作业
         :return:

@@ -14,7 +14,7 @@ from parsers.SU2Parser import SU2Parser
 
 class SU2ResultHandler(RegexMatchingEventHandler):
 
-    def __init__(self, solve_job_id, rf_regs=[r'.*history\..+'],**kwargs):
+    def __init__(self, solve_job_id, rf_regs=(r'.*history\..+', ), **kwargs):
         # TODO: 待重构
         super(SU2ResultHandler, self).__init__(regexes=rf_regs, **kwargs)
         self.rf_regs = rf_regs
@@ -31,5 +31,4 @@ class SU2ResultHandler(RegexMatchingEventHandler):
             self.res_dict_tmp, self.keys, self.offset = self.su2p.parse_first_line()
         results, self.offset = self.su2p.res_parse(self.res_dict_tmp, self.keys, self.offset)
         curent_step = int(results[-1]["Iteration"]) if len(results) is not 0 else 0
-        # print(curent_step)
         DB.update_solve_current_step(self.solve_job_id, curent_step)

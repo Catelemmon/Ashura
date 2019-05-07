@@ -25,7 +25,7 @@ class Solve(ModelBase):
 
     __tablename__ = "solve"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    solve_id = Column(Integer, primary_key=True, autoincrement=True)
     solve_path = Column(String(200), nullable=False)  # 仿真的工作路径
     mesh_path = Column(String(200), nullable=False)  # 网格文件的路径
     username = Column(String(20), default="middleware")  # 创建solve_job的用户
@@ -39,8 +39,8 @@ class SolveStatus(ModelBase):
 
     __tablename__ = "solve_status"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    solve_job_id = Column(Integer, nullable=False)  # solve_job的id
+    _id = Column(Integer, primary_key=True, autoincrement=True)
+    solve_id = Column(Integer, nullable=False)  # solve_job的id
     core_num = Column(Integer, nullable=False)  # solve_job使用的cpu核数
     slurm_id = Column(Integer, nullable=False)  # 创建solve_job后slurm的id号
     slurm_status = Column(Integer, nullable=False)  # PENDING R FAILED COMPLETE CANCELED
@@ -56,7 +56,7 @@ class SolveResults(ModelBase):
     __tablename__ = "sovle_results"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    job_id = Column(Integer, nullable=False)
+    solve_id = Column(Integer, nullable=False)
     post_results = Column(JSON, nullable=False)  # 后处理的结果文件(兼容OpenFoam和SU2)
     create_time = Column(DateTime, default=func.now())  # 结果创建的时间
 
@@ -65,8 +65,8 @@ class SolveChart(ModelBase):
 
     __tablename__ = "solve_chart"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    job_id = Column(Integer, primary_key=True, )  # 作业的id
+    _rsd_id = Column(Integer, primary_key=True, autoincrement=True)
+    solve_id = Column(Integer, primary_key=True, )  # 作业的id
     iteration_step = Column(Integer, nullable=False)  # 迭代次数
     multi_fields = Column(JSON, nullable=False)  # 多个域中存储的值
     calc_time = Column(Float, nullable=True)  # 计算耗时
@@ -75,13 +75,13 @@ class SolveChart(ModelBase):
     create_time = Column(DateTime, default=func.now())
 
 
-class CadConvert(ModelBase):
+class Convert(ModelBase):
 
     __tablename__ = "cad_convert"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    cad_path = Column(String(200), nullable=False)  # cad 的路径
-    cad_type = Column(Integer, nullable=False)  # cad 的文件类型
+    convert_id = Column(Integer, primary_key=True, autoincrement=True)
+    source_path = Column(String(200), nullable=False)  # cad 的路径
+    de_type = Column(Integer, nullable=False)  # cad 的文件类型
     target_path = Column(Integer, nullable=False)  # 目标文件的输出路径
     target_type = Column(Integer, nullable=False)  # 目标文件的类型
     convert_status = Column(Integer, nullable=False)  # 0 转换完成 1 正在转换 2 转换失败

@@ -14,6 +14,7 @@ import json
 from flask import Flask
 from flask_restplus import Resource, Api, Namespace
 
+from actions.solve_flow import stop_solve
 from dbs import DB
 from servers import AshuraServer
 
@@ -21,8 +22,9 @@ ns = Namespace("/", description="中间件接口文档!")
 
 solve_parser = ns.parser()
 solve_parser.add_argument("work-path", type=str, help="workspace of job", location='form')
-solve_parser.add_argument("mesh-file-path", type=str, help="the path of mesh", location='form')
+solve_parser.add_argument("mesh-file-name", type=str, help="the path of mesh", location='form')
 solve_parser.add_argument("username", type=str, help="who sends the solve", location='form')
+solve_parser.add_argument("job-name", type=str, help="job name", location='form')
 solve_parser.add_argument("solve-app", type=int, help="the id of solve app", location='form')
 solve_parser.add_argument("solve-config", type=str, help="the config of solve-config", location='form')
 solve_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
@@ -30,6 +32,10 @@ solve_parser.add_argument("accesstoken", type=str, help="the token to attach mid
 results_parser = ns.parser()
 results_parser.add_argument("jobId", type=int, help="the id of job", location='form')
 results_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+stop_solve_parser = ns.parser()
+stop_solve_parser.add_argument("jobId", type=int, help="the id of job", location='form')
+stop_solve_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -55,7 +61,7 @@ class DoSolve(Resource):
     def post(self):
 
         # 校验参数
-        solve_args = ["work-path", "mesh-file-path", "username", "solve-app", "solve-config", "accesstoken"]
+        solve_args = ["work-path", "mesh-file-name", "username", "job-name", "solve-app", "solve-config", "accesstoken"]
         kwargs = dict(solve_parser.parse_args())
         for args in solve_args:
             if args not in kwargs:
@@ -78,19 +84,26 @@ class JobResults(Resource):
         arg = dict(results_parser.parse_args())
         job_id = arg.get("jobId", None)
         if job_id is None:
-            return create_resp(1, msg="没有传入job id", result="{}")
+            return create_resp(1, msg="we didn't get jobId!", result=None)
 
-        result = DB.query_solve_status(job_id=job_id)
-        return create_resp(1, msg="", result=result)
+        result = DB.query_solve_status(solve_id=job_id)
+        return create_resp(0, msg="", result=result)
 
 
-class JobChart(Resource):
+@ns.route("/stop-job")
+class StopJob(Resource):
+    """
+    :description 停止作业
+    """
+    @ns.doc(parser=stop_solve_parser)
     def post(self):
-        pass
+        arg = dict(stop_solve_parser.parse_args())
+        job_id = arg.get("jobId", None)
+        if job_id is None:
+            return create_resp(1, msg="we didn't get jobId!", result=None)
 
-
-class CadConvert(Resource):
-    pass
+        code, msg = stop_solve(job_id)
+        return create_resp(code, msg, result=None)
 
 
 class HttpServer(AshuraServer):
@@ -99,7 +112,6 @@ class HttpServer(AshuraServer):
         self._app = Flask("AshuraServer")
         self._api = Api(app=self._app, title="中间件接口文档", version="v0.1", description="无描述")
         self._api.add_namespace(ns)
-        pass
 
     @classmethod
     def _from_parts(cls, kwargs, init=True):

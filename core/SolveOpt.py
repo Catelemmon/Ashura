@@ -6,58 +6,61 @@
 @file: SolveOpt.py
 @time: 2019/4/24 上午10:29 
 """
-from monitor import fm
-from monitor.Handlers import SU2ResultHandler
-from schedulers import Slurm
+from importlib import import_module
+from typing import Dict
 
 
 class SolveOpt(object):
 
     # TODO 解算类待重构
 
-    def __new__(cls, **kwargs):
+    def __new__(cls, solve_dir, solve_app_type="SU2", **kwargs):
 
-        self = object.__new__(cls)
-        self.solve_path = kwargs["solve_path"]
+        mdl_name = class_name = solve_app_type + "SolveOpt"
+        mdl = import_module(mdl_name, package="core")
+        cls = getattr(mdl, class_name)
+        self = cls._from_parts(kwargs)
+        self.solve_type = solve_app_type
+        self.solve_dir = solve_dir
         return self
 
-    def excute_solveflow(self, call_schduler=None):
-        # TODO 执行solve操作流
-        # solve_config_res = self._write_config()
-        # if solve_config_res:
-        #     return solve_config_res
-        # write_sd_res = self._write_scheduler_config()
-        # if write_sd_res:
-        #     return write_sd_res
-        slurm_id = Slurm.send_job(self.solve_path)
-        return slurm_id
+    @classmethod
+    def _from_parts(cls, kwargs, init=True):
+        self = object.__new__(cls)
+        pars: Dict = cls._parse(kwargs)
+        self.options = kwargs
+        for key in pars:
+            setattr(self, key, pars[key])
+            self.options.pop(key)
+        if init:
+            self._init()
+        return self
 
-    def _init_status(self):
+    @classmethod
+    def _parse(cls, kwargs):
+        return kwargs
+
+    def _init(self):
+        self.commands_dict = None
         pass
 
-    def _write_config(self):
-        try:
-            # do something
-            return None
-        except Exception:
-            # logging
-            return "写入解算器参数出错"
+    def get_commands_dict(self):
+        # 返回执行的命令
+        pass
 
-    def _write_scheduler_config(self):
-        try:
-            # do somthing
-            # logging
-            return None
-        except Exception:
-            return "写入scheduler参数出错"
+    def ready_solve_dir(self, **kwargs):
+        # 准备解算目录, 拷贝操作等
+        pass
 
-    def _excute_solvescript(self):
-        try:
-            # do something
-            slurm_id = 0
-            return slurm_id
-        except Exception:
-            return "执行脚本出错"
+    def render_configs(self, parser=None, **solve_args):
+        # 渲染配置文件
+        pass
 
-    def _add_solve_monitor(self, handler):
+    @classmethod
+    def _write_configs(cls, config_path, data):
+        # 写配置文件
+        pass
+
+    def start_solve(self):
+        # 单机版本
         pass

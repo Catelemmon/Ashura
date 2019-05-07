@@ -6,19 +6,12 @@
 @file: configs.py
 @time: 19-3-28 上午11:44 
 """
-
-
+import os
 from pathlib import Path
-
-CAE_APPLICATION_TYPE = (
-    "OpenFoam",
-    "SU2",
-    "MOOSE"
-)
 
 LOG_SYS_ENUM = ("logging", "sentry")
 
-BASE_DIR = Path.cwd().parent
+BASE_DIR = Path(os.path.abspath(__file__)).parent.parent
 
 LAUNCH_BEHOLDER = True
 

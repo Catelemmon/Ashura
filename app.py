@@ -11,11 +11,6 @@
 import os
 import sys
 from pathlib import Path
-
-from watchdog.events import FileSystemEventHandler
-
-from monitor import fm
-from monitor.Handlers import SU2ResultHandler
 from servers import AshuraServer
 
 
@@ -29,4 +24,3 @@ if __name__ == '__main__':
     sys.path = set(sys.path)
     server = AshuraServer(host="0.0.0.0", port=5000, is_debug=True)
     server.run_server()
-

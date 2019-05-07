@@ -8,6 +8,7 @@
 """
 import copy
 import os
+import signal
 from multiprocessing import Process
 
 from watchdog.observers import Observer
@@ -39,11 +40,12 @@ class WorkDirMonitor(object):
 
     def kill_watcher(self, path):
         pid = self.watchers.get(path, -1)
-        os.kill(pid)
-        self.watchers.pop(path)
-        self.kill_count += 1
-        if self.kill_count >= 150:
-            self.watchers = copy.deepcopy(self.watchers)
+        if pid is not -1:
+            os.kill(pid, signal.SIGKILL)
+            self.watchers.pop(path)
+            self.kill_count += 1
+            if self.kill_count >= 150:
+                self.watchers = copy.deepcopy(self.watchers)
 
 
 

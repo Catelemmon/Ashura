@@ -38,15 +38,21 @@ if not Path(LOG_DIR).exists():
     Path(LOG_DIR).mkdir()
 
 # 一些模板文件的目录
-TEMPLATES_DIR = PurePosixPath.joinpath(BASE_DIR, "templates")
+TEMPLATES_DIR = Path(BASE_DIR).joinpath("templates")
 
 # 脚本的目录
-SCRIPTS_PATH = PurePosixPath.joinpath(TEMPLATES_DIR, "scripts")
+SCRIPTS_PATH = Path(TEMPLATES_DIR).joinpath("scripts")
+
+# 模板文件目录
+TEMPLATES_FILES_PATH = Path(TEMPLATES_DIR).joinpath("files")
 
 # 创建用户的脚本
 USER_ADD_SCRIPT = PurePosixPath.joinpath(TEMPLATES_DIR, "add-user.sh")
 
 # 修改用户的脚本
 PASSWD_USER_SCRIPT = PurePosixPath.joinpath(TEMPLATES_DIR, "passwd-user.sh")
+
+# 每个节点有多少个计算核心
+CORE_NUM_PER_NODE = 20
 
 

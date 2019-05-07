@@ -9,4 +9,6 @@
 
 from monitor.WorkDirMonitor import WorkDirMonitor
 
-fm = WorkDirMonitor()
+global DIR_MONITOR
+
+DIR_MONITOR = WorkDirMonitor()

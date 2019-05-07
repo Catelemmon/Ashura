@@ -7,8 +7,8 @@
 @time: 2019/4/30 上午10:03 
 """
 import copy
-from pathlib import Path
 
+from constants.maps import JSON_2_SU2CONFIG
 from utils.offset_file import offset_file, def_end_func
 
 
@@ -41,3 +41,11 @@ class SU2Parser(object):
                 res_dict_tmp[key] = None
             first_line_offset = f_obj.tell()
             return res_dict_tmp, keys, first_line_offset
+
+    @classmethod
+    def json_2_config(cls, **solve_args):
+        # TODO 添加异常处理
+        res = {}
+        for key in JSON_2_SU2CONFIG:
+            res[JSON_2_SU2CONFIG[key]] = solve_args[key]
+        return res

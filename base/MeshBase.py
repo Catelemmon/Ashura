@@ -10,8 +10,7 @@
 import codecs
 from pathlib import Path
 
-
-from configs.config import CAE_APPLICATION_TYPE
+from constants.maps import CAE_APPLICATION_TYPE
 from utils.log_utils import get_logger
 
 
@@ -58,7 +57,7 @@ class MeshBase:
     @classmethod
     def _init(cls, workpath, is_upload=False, upload_mtype="OpenFoam", **kwargs):
         self = object.__new__(cls)
-        self.workpath == workpath
+        self.workpath = workpath
         self.is_upload = is_upload
         self.upload_mtype = upload_mtype
         self._parse_args(kwargs)
