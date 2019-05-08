@@ -10,7 +10,6 @@ import copy
 from typing import Dict
 
 from actions import solve_flow
-import json
 from flask import Flask
 from flask_restplus import Resource, Api, Namespace
 
@@ -61,7 +60,8 @@ class DoSolve(Resource):
     def post(self):
 
         # 校验参数
-        solve_args = ["work-path", "mesh-file-name", "username", "job-name", "solve-app", "solve-config", "accesstoken"]
+        solve_args = ["work-path", "mesh-file-name", "username",
+                      "job-name", "solve-app", "solve-config", "accesstoken"]
         kwargs = dict(solve_parser.parse_args())
         for args in solve_args:
             if args not in kwargs:
@@ -69,7 +69,6 @@ class DoSolve(Resource):
                 return create_resp(code, msg, results)
 
         # 执行solve
-
         job_id, msg = solve_flow.start_solve_actions(**kwargs)
         return create_resp(0, msg, {"jobId": job_id})
 

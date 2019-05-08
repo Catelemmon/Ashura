@@ -18,6 +18,7 @@ CAE_APPLICATION_TYPE = (
 JSON_2_SU2CONFIG = {
     "writeInterval": "write_interval",
     "mesh_input_file": "mesh_input_file",
+    "EXT_ITER": "EXT_ITER",
 }
 
 JSON_2_SLURMCONFIG = {
@@ -58,6 +59,3 @@ DB_2_JSON = {
 ARGS_2_DB = {
 
 }
-
-
-

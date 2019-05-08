@@ -9,7 +9,11 @@
 import copy
 
 from constants.maps import JSON_2_SU2CONFIG
+from utils.log_utils import get_logger
 from utils.offset_file import offset_file, def_end_func
+
+
+parser_logger = get_logger(logger_name="parser")
 
 
 class SU2Parser(object):
@@ -44,8 +48,10 @@ class SU2Parser(object):
 
     @classmethod
     def json_2_config(cls, **solve_args):
-        # TODO 添加异常处理
         res = {}
-        for key in JSON_2_SU2CONFIG:
-            res[JSON_2_SU2CONFIG[key]] = solve_args[key]
+        try:
+            for key in JSON_2_SU2CONFIG:
+                res[JSON_2_SU2CONFIG[key]] = solve_args[key]
+        except KeyError:
+            parser_logger.exception(f"参数解析失败 \n {str(solve_args)}")
         return res

@@ -12,7 +12,10 @@ from mysql import connector
 
 from constants.maps import DB_2_JSON
 from models.model import *
-import traceback
+
+from utils.log_utils import get_logger
+
+db_logger = get_logger("db")
 
 
 class DB:
@@ -38,7 +41,7 @@ class DB:
             _session.commit()
             return solve.solve_id
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function write_solve failed")
             return -1
         finally:
             _session.close()
@@ -49,7 +52,7 @@ class DB:
             solve_path = _session.query(Solve).filter(Solve.solve_id == solve_id).first().solve_path
             return solve_path
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function query_solve_path failed")
             return None
         finally:
             _session.close()
@@ -59,10 +62,10 @@ class DB:
         try:
             ss = SolveStatus(
                 solve_id=kwargs["job_id"],
-                core_num=0,
+                core_num=kwargs["core_num"],
                 slurm_id=kwargs["slurm_id"],
                 slurm_status=0,
-                total_step=0,
+                total_step=kwargs["total_step"],
                 current_step=0,
                 log_file=kwargs["log_file"],
                 error_file=kwargs["error_file"],
@@ -73,7 +76,7 @@ class DB:
             _session.close()
             return 0
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function write_solve failed")
             return -1
         finally:
             _session.close()
@@ -89,7 +92,7 @@ class DB:
                 result[res_mapping[param]] = getattr(solve_status, param)
             return result
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function query_solve_status failed")
             return None
         finally:
             _session.close()
@@ -102,7 +105,7 @@ class DB:
             unactive_job_ids = _session.query(SolveStatus).filter(SolveStatus.slurm_status == 1).all()
             return unactive_job_ids
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function query_activejob failed")
             return None
         finally:
             _session.close()
@@ -124,7 +127,7 @@ class DB:
                 update({SolveStatus.current_step: current_step})
             _session.commit()
         except Exception:
-            traceback.print_exc()
+            db_logger.exception("db-function update_solve_current_step failed")
         finally:
             _session.close()
 
@@ -142,9 +145,22 @@ class SlurmDB(object):
 
     def query_job_status(self, slurm_id):
         cursor = self.db.cursor()
-        cursor.execute(f"select state from slurm_acct_db.linux_job_table where id_job={slurm_id};")
-        status = cursor.fetchone()[0]
-        cursor.close()
-        return status
+        try:
 
+            cursor.execute(f"select state from slurm_acct_db.linux_job_table where id_job={slurm_id};")
+            status = cursor.fetchone()[0]
+            return status
+        except Exception:
+            db_logger.exception("SlurmDB-function query_job_status failed")
+        finally:
+            cursor.close()
+
+    def query_active_job(self):
+        cursor = self.db.cursor()
+        try:
+            cursor.execute()
+        except Exception:
+            pass
+        finally:
+            cursor.close()
 

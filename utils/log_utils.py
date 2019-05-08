@@ -59,7 +59,7 @@ def default_logger(name=None, logger=None, level=None, logfile=None, message=Non
                 inner_logger.addHandler(streamh)
                 inner_logger.log(loglevel, f"executing function {logmsg}")
                 inner_logger.handlers.clear()
-                return func(*args, *kwargs)
+                return func(*args, **kwargs)
             except ValueError:
                 raise
             except Exception:

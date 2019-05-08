@@ -15,6 +15,9 @@ from jinja2 import FileSystemLoader, Template
 from pathlib import Path
 from configs import SCRIPTS_PATH, CORE_NUM_PER_NODE
 from schedulers import Scheduler
+from utils.log_utils import get_logger
+
+scheduler_logger = get_logger("scheduler")
 
 
 class Slurm(Scheduler.Scheduler):
@@ -44,10 +47,11 @@ class Slurm(Scheduler.Scheduler):
             slurm_id = int(re.search("\d+", res).group())
             return slurm_id
         except subprocess.CalledProcessError:
-            # logging
+            scheduler_logger.exception("slurm创建作业失败")
             return -1
         except AttributeError:
             # logging
+            scheduler_logger.exception(f"参数错误 | {str(kwargs)}")
             return -1
 
     def data_parse(self):
@@ -65,5 +69,8 @@ class Slurm(Scheduler.Scheduler):
 
     @classmethod
     def _write_script(cls, batch_data, script):
-        with codecs.open(script, encoding="utf-8", mode="w") as sh_obj:
-            sh_obj.write(batch_data)
+        try:
+            with codecs.open(script, encoding="utf-8", mode="w") as sh_obj:
+                sh_obj.write(batch_data)
+        except PermissionError:
+            scheduler_logger.exception("写slurm脚本错误")

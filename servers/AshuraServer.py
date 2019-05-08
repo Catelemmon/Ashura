@@ -14,7 +14,7 @@ from typing import Dict
 
 class AshuraServer(object):
 
-    def __new__(cls, server_type="HttpServer", hooks=[], **kwargs):
+    def __new__(cls, server_type="HttpServer", hooks=(), **kwargs):
         # 构建不同的服务器 HTTP服务或者是rpc
         # hooks是为了启动其他的相关服务
 

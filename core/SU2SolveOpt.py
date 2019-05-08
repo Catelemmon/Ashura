@@ -17,6 +17,9 @@ from configs import TEMPLATES_FILES_PATH
 from constants.commands import SU2_COMMANDS
 from core.SolveOpt import SolveOpt
 from parsers.SU2Parser import SU2Parser
+from utils.log_utils import default_logger, get_logger
+
+core_logger = get_logger("core")
 
 
 class SU2SolveOpt(SolveOpt):
@@ -56,17 +59,27 @@ class SU2SolveOpt(SolveOpt):
     def get_commands_dict(self):
         return self.commands_dict
 
+    @default_logger(name="core")
     def render_configs(self, parser=SU2Parser, **solve_args):
+        script_data = None
         render_args: Dict = parser.json_2_config(mesh_input_file=self.su2_mesh_file, **solve_args)
-        loader = FileSystemLoader(str(TEMPLATES_FILES_PATH))
-        tmp = Template(loader.get_source(None, self.su2_cfg_temp)[0])
-        script_data = tmp.render(**render_args)
+        if render_args is {}:
+            raise ValueError("参数解析失败")
+        try:
+            loader = FileSystemLoader(str(TEMPLATES_FILES_PATH))
+            tmp = Template(loader.get_source(None, self.su2_cfg_temp)[0])
+            script_data = tmp.render(**render_args)
+        except Exception:
+            raise
         return script_data
 
     @classmethod
     def _write_config(cls, config_path, data):
-        with codecs.open(config_path, encoding="utf-8", mode="w") as config_obj:
-            config_obj.write(data)
+        try:
+            with codecs.open(config_path, encoding="utf-8", mode="w") as config_obj:
+                config_obj.write(data)
+        except Exception:
+            core_logger.exception(f"仿真配置文件写入异常 | {config_path}")
 
     def ready_solve_dir(self, **kwargs):
         script_data = self.render_configs(**kwargs)
