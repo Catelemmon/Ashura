@@ -1,0 +1,153 @@
+{
+  "description": "SU2解算器作业配置文件",
+  "value": "Mesh",
+  "application": "SU2_CFD",
+  "options": [
+    {
+      "name": "InitialCondition",
+      "label": "初始条件",
+      "icon": ["fa", "file"],
+      "option": [
+        {
+          "name": "AOA",
+          "label": "攻角",
+          "type": "real",
+          "value": 1.25,
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        },
+        {
+          "name": "MACH_NUMBER",
+          "label": "马赫数",
+          "type": "real",
+          "value": 0.8,
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        },
+        {
+          "name": "FREESTREAM_TEMPERATURE",
+          "label": "温度",
+          "type": "real",
+          "value": 288.15,
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        },
+        {
+          "name": "REYNOLDS_NUMBER",
+          "label": "雷诺数",
+          "type": "real",
+          "value": 5e3,
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "BoundaryCondition",
+      "label": "边界条件",
+      "icon": ["fa", "file"],
+      "option": [
+        {
+          "name": "MARKER_EULER",
+          "label": "物面",
+          "type": "list",
+          "value": ["airfoil", "airfoil", "airfoil", "airfoil"]
+        },
+        {
+          "name": "MARKER_FAR",
+          "label": "远场",
+          "type": "list",
+          "value": ["farfield", "farfield"]
+        }
+      ]
+    },
+    {
+      "name": "Run",
+      "label": "并行设置",
+      "icon": ["fa", "file"],
+      "option": [
+        {
+          "name": "numProc",
+          "label": "并行核数",
+          "type": "slider",
+          "value": 10,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "name": "CFL_NUMBER",
+          "label": "CFD数",
+          "type": "real",
+          "value": "1.0",
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        },
+        {
+          "name": "EXT_ITER",
+          "label": "迭代步数",
+          "type": "int",
+          "value": "220",
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        },
+        {
+          "name": "WRT_CON_FREQ",
+          "label": "写入间隔",
+          "type": "int",
+          "value": "1",
+          "rules": [
+            { "required": true, "message": "不能为空", "trigger": "blur" },
+            {
+              "min": 1,
+              "max": 20,
+              "message": "长度在 1 到 20 个字符",
+              "trigger": "blur"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -49,9 +49,22 @@ class SU2Parser(object):
     @classmethod
     def json_2_config(cls, **solve_args):
         res = {}
+        EXT_ITER = None
+        WRT_CON_FREQ = None
         try:
-            for key in JSON_2_SU2CONFIG:
-                res[JSON_2_SU2CONFIG[key]] = solve_args[key]
+            options = solve_args["options"]
+            for option_item in options:
+                sub_options = option_item["option"]
+                for sub_op in sub_options:
+                    if sub_op["name"] == "EXT_ITER":
+                        EXT_ITER = sub_op["value"]
+                    if sub_op["name"] == "WRT_CON_FREQ":
+                        WRT_CON_FREQ = sub_op["value"]
+
+            res[JSON_2_SU2CONFIG["EXT_ITER"]] = EXT_ITER
+            res[JSON_2_SU2CONFIG["writeInterval"]] = WRT_CON_FREQ
+            res[JSON_2_SU2CONFIG["mesh_input_file"]] = solve_args["mesh_input_file"]
+
         except KeyError:
             parser_logger.exception(f"参数解析失败 \n {str(solve_args)}")
         return res

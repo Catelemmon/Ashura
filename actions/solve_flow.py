@@ -56,9 +56,19 @@ def _start_solve(job_id, solve_path, mesh_file_path, username, job_name, solve_a
         so = SolveOpt(solve_dir=solve_path, solve_type=solve_app_type, mesh_file_path=mesh_file_path)
         so.ready_solve_dir(**solve_config)
         commands = so.get_commands_dict()
-
+        total_core = None
+        all_step = None
+        options = solve_config["options"]
+        for option_item in options:
+            sub_options = option_item["option"]
+            for sub_op in sub_options:
+                if sub_op["name"] == "EXT_ITER":
+                    all_step = sub_op["value"]
+                if sub_op["name"] == "numProc":
+                    total_core = sub_op["value"]
+        if total_core <= 0:
+            total_core = 10
         slurm = Slurm()
-        total_core = solve_config.get("numProc", 10)
         slurm_id = slurm.send_job(work_dir=solve_path, total_core=total_core, username=username,
                                   job_name=job_name, **commands)
         log_file = str(Path(solve_path).joinpath(f"{slurm_id}.out"))
@@ -67,7 +77,7 @@ def _start_solve(job_id, solve_path, mesh_file_path, username, job_name, solve_a
             job_id=job_id,
             slurm_id=slurm_id,
             core_num=total_core,
-            total_step=solve_config.get("EXT_ITER", 0),
+            total_step=all_step,
             log_file=log_file,
             error_file=error_file
         )
