@@ -14,6 +14,12 @@ CAE_APPLICATION_TYPE = (
     "MOOSE"
 )
 
+SU2_SOLVE_CONFIG_MAP = {
+    "InitialCondition": "init_cfg",  # su2的初始条件
+    "BoundaryCondition": "bound_cfg",
+    "Run": "parl_cfg"
+}
+
 # JSON映射到SU2配置文件
 JSON_2_SU2CONFIG = {
     "writeInterval": "write_interval",
@@ -51,9 +57,12 @@ DB_2_JSON = {
 
     },
     "solve_chart": {
-
+        "solve_id": "jobId",
+        "iteration_step": "iterationStep",
+        "multi_fields": "multiFields",
     },
 }
+
 
 # 参数映射到数据库
 ARGS_2_DB = {

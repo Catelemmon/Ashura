@@ -12,10 +12,11 @@ from mysql import connector
 
 from constants.maps import DB_2_JSON
 from models.model import *
-
+import json
 from utils.log_utils import get_logger
 
 db_logger = get_logger("db")
+
 
 
 class DB:
@@ -73,7 +74,6 @@ class DB:
             )
             _session.add(ss)
             _session.commit()
-            _session.close()
             return 0
         except Exception:
             db_logger.exception("db-function write_solve failed")
@@ -88,8 +88,8 @@ class DB:
             solve_status = _session.query(SolveStatus).filter(SolveStatus.solve_id == solve_id).first()
             res_mapping = DB_2_JSON[SolveStatus.__tablename__]
             result = {}
-            for param in res_mapping:
-                result[res_mapping[param]] = getattr(solve_status, param)
+            for attr in res_mapping:
+                result[res_mapping[attr]] = getattr(solve_status, attr)
             return result
         except Exception:
             db_logger.exception("db-function query_solve_status failed")
@@ -128,6 +128,43 @@ class DB:
             _session.commit()
         except Exception:
             db_logger.exception("db-function update_solve_current_step failed")
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_solve_chart(cls, solve_job_id, iter_step, fields_json):
+        _session = DBsession()
+        try:
+            res_col = SolveChart(
+                solve_id=solve_job_id,
+                iteration_step=iter_step,
+                multi_fields=fields_json,
+            )
+            _session.add(res_col)
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function write_solve_chart failed")
+        finally:
+            _session.close()
+
+    @classmethod
+    def query_solve_chart(cls, solve_job_id, begin=0):
+        _session = DBsession()
+        res_mapping = DB_2_JSON[SolveChart.__tablename__]
+        try:
+            solve_charts: List[SolveChart] = _session.query(SolveChart).filter(SolveChart.solve_id == solve_job_id,
+                                                                                SolveChart.iteration_step > begin).\
+                order_by(SolveChart.iteration_step.asc()).limit(50)
+            cols = []
+            for chart_model in solve_charts:
+                col = {}
+                for attr in res_mapping:
+                    col[res_mapping[attr]] = getattr(chart_model, attr)
+                    col["datetime"] = str(getattr(chart_model, "create_time"))
+                cols.append(col)
+            return cols
+        except Exception:
+            db_logger.exception("db-function query_solve_chart failed")
         finally:
             _session.close()
 

@@ -22,5 +22,5 @@ if __name__ == '__main__':
         if pp not in sys.path:
             sys.path.append(pp)
     sys.path = set(sys.path)
-    server = AshuraServer(host="0.0.0.0", port=5001, is_debug=True)
+    server = AshuraServer(host="0.0.0.0", port=5000, is_debug=True)
     server.run_server()

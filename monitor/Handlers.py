@@ -6,6 +6,8 @@
 @file: Handlers.py
 @time: 2019/4/30 下午1:52 
 """
+import json
+
 from watchdog.events import RegexMatchingEventHandler
 
 from dbs import DB
@@ -31,4 +33,8 @@ class SU2ResultHandler(RegexMatchingEventHandler):
             self.res_dict_tmp, self.keys, self.offset = self.su2p.parse_first_line()
         results, self.offset = self.su2p.res_parse(self.res_dict_tmp, self.keys, self.offset)
         curent_step = int(results[-1]["Iteration"]) if len(results) is not 0 else 0
-        DB.update_solve_current_step(self.solve_job_id, curent_step)
+        if len(results) is not 0:
+            DB.update_solve_current_step(self.solve_job_id, curent_step)  # 更新数据库中仿真当前步数
+            for l_res in results:
+                iter_step = l_res["Iteration"]
+                DB.write_solve_chart(self.solve_job_id, iter_step, l_res)

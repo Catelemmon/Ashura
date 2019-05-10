@@ -14,7 +14,7 @@ from flask import Flask
 from flask_restplus import Resource, Api, Namespace
 
 from actions.solve_flow import stop_solve
-from dbs import DB
+from dbs import DB, SlurmDB
 from servers import AshuraServer
 
 ns = Namespace("/", description="中间件接口文档!")
@@ -36,6 +36,11 @@ stop_solve_parser = ns.parser()
 stop_solve_parser.add_argument("jobId", type=int, help="the id of job", location='form')
 stop_solve_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
+solve_chart = ns.parser()
+solve_chart.add_argument("jobId", type=int, help="the job of job", location='form')
+solve_chart.add_argument("begin", type=int, help="the begin of iteration step", location='form')
+solve_chart.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
 RESPONSE_TEMPLATE = {
     "code": None,
     "msg": None,
@@ -56,6 +61,7 @@ class DoSolve(Resource):
     """
     :description 提交仿真作业
     """
+
     @ns.doc(parser=solve_parser)
     def post(self):
 
@@ -78,6 +84,7 @@ class JobResults(Resource):
     """
     :description 获取仿真的结果
     """
+
     @ns.doc(parser=results_parser)
     def post(self):
         arg = dict(results_parser.parse_args())
@@ -86,6 +93,12 @@ class JobResults(Resource):
             return create_resp(1, msg="we didn't get jobId!", result=None)
 
         result = DB.query_solve_status(solve_id=job_id)
+
+        slurm_id = result["slurmId"]
+        status = SlurmDB().query_job_status(slurm_id)
+        result["currentStep"] = result["currentStep"] + 1 if result["currentStep"] > 0 else 0
+        result["slurmStatus"] = status
+
         return create_resp(0, msg="", result=result)
 
 
@@ -94,6 +107,7 @@ class StopJob(Resource):
     """
     :description 停止作业
     """
+
     @ns.doc(parser=stop_solve_parser)
     def post(self):
         arg = dict(stop_solve_parser.parse_args())
@@ -103,6 +117,22 @@ class StopJob(Resource):
 
         code, msg = stop_solve(job_id)
         return create_resp(code, msg, result=None)
+
+
+@ns.route("/solve-chart")
+class SolveChart(Resource):
+    """
+    :description 仿真图表
+    """
+    @ns.doc(parser=solve_chart)
+    def post(self):
+        arg = dict(solve_chart.parse_args())
+        job_id = arg.get("jobId", None)
+        if job_id is None:
+            return create_resp(1, msg="we didn't get jobId!", result=None)
+        begin = arg.get("begin", 0)
+        result = DB.query_solve_chart(solve_job_id=job_id, begin=begin)
+        return create_resp(0, msg="success", result=result)
 
 
 class HttpServer(AshuraServer):

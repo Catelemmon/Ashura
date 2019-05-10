@@ -1,153 +1,199 @@
 {
-  "description": "SU2½âËãÆ÷×÷ÒµÅäÖÃÎÄ¼ş",
-  "value": "Mesh",
-  "application": "SU2_CFD",
-  "options": [
-    {
-      "name": "InitialCondition",
-      "label": "³õÊ¼Ìõ¼ş",
-      "icon": ["fa", "file"],
-      "option": [
+    "description": "SU2è§£ç®—å™¨ä½œä¸šé…ç½®æ–‡ä»¶",
+    "value": "Mesh",
+    "application": "SU2_CFD",
+    "options": [
         {
-          "name": "AOA",
-          "label": "¹¥½Ç",
-          "type": "real",
-          "value": 1.25,
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
+            "name": "InitialCondition",
+            "label": "åˆå§‹æ¡ä»¶",
+            "icon": [
+                "fa",
+                "file"
+            ],
+            "option": [
+                {
+                    "name": "AOA",
+                    "label": "æ”»è§’",
+                    "type": "real",
+                    "value": 1.25,
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                },
+                {
+                    "name": "MACH_NUMBER",
+                    "label": "é©¬èµ«æ•°",
+                    "type": "real",
+                    "value": 0.8,
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                },
+                {
+                    "name": "FREESTREAM_TEMPERATURE",
+                    "label": "æ¸©åº¦",
+                    "type": "real",
+                    "value": 288.15,
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                },
+                {
+                    "name": "REYNOLDS_NUMBER",
+                    "label": "é›·è¯ºæ•°",
+                    "type": "real",
+                    "value": 5000,
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                }
+            ]
         },
         {
-          "name": "MACH_NUMBER",
-          "label": "ÂíºÕÊı",
-          "type": "real",
-          "value": 0.8,
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
+            "name": "BoundaryCondition",
+            "label": "è¾¹ç•Œæ¡ä»¶",
+            "icon": [
+                "fa",
+                "file"
+            ],
+            "option": [
+                {
+                    "name": "MARKER_EULER",
+                    "label": "ç‰©é¢",
+                    "type": "list",
+                    "value": [
+                        "airfoil",
+                        "airfoil",
+                        "airfoil",
+                        "airfoil"
+                    ]
+                },
+                {
+                    "name": "MARKER_FAR",
+                    "label": "è¿œåœº",
+                    "type": "list",
+                    "value": [
+                        "farfield",
+                        "farfield"
+                    ]
+                }
+            ]
         },
         {
-          "name": "FREESTREAM_TEMPERATURE",
-          "label": "ÎÂ¶È",
-          "type": "real",
-          "value": 288.15,
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
-        },
-        {
-          "name": "REYNOLDS_NUMBER",
-          "label": "À×ÅµÊı",
-          "type": "real",
-          "value": 5e3,
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
+            "name": "Run",
+            "label": "å¹¶è¡Œè®¾ç½®",
+            "icon": [
+                "fa",
+                "file"
+            ],
+            "option": [
+                {
+                    "name": "numProc",
+                    "label": "å¹¶è¡Œæ ¸æ•°",
+                    "type": "slider",
+                    "value": 10,
+                    "min": 1,
+                    "max": 10
+                },
+                {
+                    "name": "CFL_NUMBER",
+                    "label": "CFDæ•°",
+                    "type": "real",
+                    "value": "1.0",
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                },
+                {
+                    "name": "EXT_ITER",
+                    "label": "è¿­ä»£æ­¥æ•°",
+                    "type": "int",
+                    "value": "220",
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                },
+                {
+                    "name": "WRT_CON_FREQ",
+                    "label": "å†™å…¥é—´éš”",
+                    "type": "int",
+                    "value": "1",
+                    "rules": [
+                        {
+                            "required": true,
+                            "message": "ä¸èƒ½ä¸ºç©º",
+                            "trigger": "blur"
+                        },
+                        {
+                            "min": 1,
+                            "max": 20,
+                            "message": "é•¿åº¦åœ¨ 1 åˆ° 20 ä¸ªå­—ç¬¦",
+                            "trigger": "blur"
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "BoundaryCondition",
-      "label": "±ß½çÌõ¼ş",
-      "icon": ["fa", "file"],
-      "option": [
-        {
-          "name": "MARKER_EULER",
-          "label": "ÎïÃæ",
-          "type": "list",
-          "value": ["airfoil", "airfoil", "airfoil", "airfoil"]
-        },
-        {
-          "name": "MARKER_FAR",
-          "label": "Ô¶³¡",
-          "type": "list",
-          "value": ["farfield", "farfield"]
-        }
-      ]
-    },
-    {
-      "name": "Run",
-      "label": "²¢ĞĞÉèÖÃ",
-      "icon": ["fa", "file"],
-      "option": [
-        {
-          "name": "numProc",
-          "label": "²¢ĞĞºËÊı",
-          "type": "slider",
-          "value": 10,
-          "min": 1,
-          "max": 10
-        },
-        {
-          "name": "CFL_NUMBER",
-          "label": "CFDÊı",
-          "type": "real",
-          "value": "1.0",
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
-        },
-        {
-          "name": "EXT_ITER",
-          "label": "µü´ú²½Êı",
-          "type": "int",
-          "value": "220",
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
-        },
-        {
-          "name": "WRT_CON_FREQ",
-          "label": "Ğ´Èë¼ä¸ô",
-          "type": "int",
-          "value": "1",
-          "rules": [
-            { "required": true, "message": "²»ÄÜÎª¿Õ", "trigger": "blur" },
-            {
-              "min": 1,
-              "max": 20,
-              "message": "³¤¶ÈÔÚ 1 µ½ 20 ¸ö×Ö·û",
-              "trigger": "blur"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+    ]
 }

@@ -8,7 +8,7 @@
 """
 import json
 
-from constants.maps import CAE_APPLICATION_TYPE
+from constants.maps import CAE_APPLICATION_TYPE, SU2_SOLVE_CONFIG_MAP
 from core.SolveOpt import SolveOpt
 from dbs.db import DB, SlurmDB
 from pathlib import Path
@@ -21,6 +21,32 @@ from schedulers import Slurm
 from utils.log_utils import get_logger
 
 core_logger = get_logger("core")
+
+
+class SU2SolveController(object):
+
+    def __init__(self):
+        pass
+
+    def _args_parse(self, **params):
+        solve_path = params["work-path"]
+        launch_script = str(Path(solve_path).joinpath("solve.sh"))
+        mesh_file_name = params["mesh-file_name"]
+        username = params["username"]
+        solve_app_type = CAE_APPLICATION_TYPE[params["solve-app"]]
+        solve_config = params["solve_config"]
+
+    def _solveargs_rebuild(self, solve_config):
+        easy_args = {}
+        solve_configs = solve_config["options"]
+        for sub_config in solve_configs:
+            kw = {}
+            if sub_config["name"] in SU2_SOLVE_CONFIG_MAP:
+                easy_args[SU2_SOLVE_CONFIG_MAP[sub_config["name"]]] = kw
+            sub_option = sub_config["option"]
+
+    def start_solve(self, **params):
+        pass
 
 
 def start_solve_actions(**params):

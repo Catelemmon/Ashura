@@ -69,9 +69,6 @@ class SolveChart(ModelBase):
     solve_id = Column(Integer, primary_key=True, )  # 作业的id
     iteration_step = Column(Integer, nullable=False)  # 迭代次数
     multi_fields = Column(JSON, nullable=False)  # 多个域中存储的值
-    calc_time = Column(Float, nullable=True)  # 计算耗时
-    capture_time = Column(DateTime, default=datetime.now, nullable=False)  # 捕获时间
-    output_time = Column(DateTime, default=func.now())  # 实际输出时间
     create_time = Column(DateTime, default=func.now())
 
 
