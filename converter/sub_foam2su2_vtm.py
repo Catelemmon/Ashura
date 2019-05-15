@@ -5,8 +5,10 @@
 @contact: 1713856662a@gmail.com
 @file: sub_foam2su2_vtm.py
 @time: 2019/4/11 上午11:50
+
 """
 import codecs
+import sys
 
 from paraview.simple import *
 import os
@@ -14,6 +16,7 @@ import re
 import gc
 import json
 import collections
+
 
 class Foam2SU2Converter(object):
 

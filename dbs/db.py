@@ -253,4 +253,3 @@ class SlurmDB(object):
             pass
         finally:
             cursor.close()
-

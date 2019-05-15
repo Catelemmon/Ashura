@@ -44,6 +44,7 @@ solve_chart.add_argument("accesstoken", type=str, help="the token to attach midd
 
 convert_parser = ns.parser()
 convert_parser.add_argument("origin-file", type=str, help="the path of the origin file", location='form')
+<<<<<<< HEAD
 convert_parser.add_argument("des-file", type=str,
                             help="the absolute path of destination file", location='form')
 convert_parser.add_argument("vf-file", type=str,
@@ -58,6 +59,15 @@ convert_parser.add_argument("accesstoken", type=str, help="the token to attach m
 convert_status = ns.parser()
 convert_status.add_argument("convertId", type=int, help="the id of convert operation", location='form')
 convert_status.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+=======
+convert_parser.add_argument("output-dir", type=str,
+                            help="the directory that result of converting ouputs", location='form')
+convert_parser.add_argument("convert-type", type=int, help="the type of converter, "
+                                                           "example: 0 means cad converts to vtm, 1 means openfoam "
+                                                           "mesh converts to su2mesh and vtm", location='form')
+convert_status = ns.parser()
+convert_status.add_argument("convertId", type=int, help="the id of convert operation", location='form')
+>>>>>>> 7523b8aee37b862b0baf3521dfb24640f44fc08f
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -156,6 +166,7 @@ class SolveChart(Resource):
 
 @ns.route("/common-convert")
 class CommonConvert(Resource):
+<<<<<<< HEAD
     """
     :description 转换接口
     """
@@ -164,12 +175,26 @@ class CommonConvert(Resource):
     def post(self):
         in_arg = dict(convert_parser.parse_args())
         args_list = ["origin-file", "vf-file", "convert-type"]
+=======
+
+    """
+    :description 转换接口
+    """
+    @ns.doc(parser=convert_parser)
+    def post(self):
+        in_arg = dict(convert_parser.parse_args())
+        args_list = ["origin-file", "output-dir", "convert-type"]
+>>>>>>> 7523b8aee37b862b0baf3521dfb24640f44fc08f
         for arg in args_list:
             if arg not in in_arg:
                 return create_resp(1, msg=f"we didn't get arg!", result=None)
         convert_id, msg = ConvertControler(in_arg["origin-file"],
+<<<<<<< HEAD
                                            in_arg.get("des-file", ""), in_arg["vf-file"],
                                            in_arg["convert-type"], in_arg.get("thumb-path", None)).start_actions()
+=======
+                                           in_arg["output-dir"], in_arg["convert-type"]).start_actions()
+>>>>>>> 7523b8aee37b862b0baf3521dfb24640f44fc08f
         if convert_id == -1:
             return create_resp(1, msg, result={})
         else:
@@ -181,7 +206,10 @@ class ConvertStatus(Resource):
     """
     :description 转换的状态
     """
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7523b8aee37b862b0baf3521dfb24640f44fc08f
     @ns.doc(parser=convert_status)
     def post(self):
         in_arg = dict(convert_status.parse_args())
