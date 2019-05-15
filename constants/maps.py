@@ -61,6 +61,13 @@ DB_2_JSON = {
         "iteration_step": "iterationStep",
         "multi_fields": "multiFields",
     },
+    "convert": {
+        "convert_id": "convertId",
+        "convert_status": "convertStatus",
+        "convert_infos": "convertInfos",
+        "begin_time": "beginTime",
+        "end_time": "endTime"
+    }
 }
 
 
@@ -68,3 +75,8 @@ DB_2_JSON = {
 ARGS_2_DB = {
 
 }
+
+CONVERT_CLASSES = [
+    ("cad2vtm", "Cad2VtmConverter"),
+    ("foam2su2_vtm", "Foam2su2Converter")
+]

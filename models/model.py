@@ -74,16 +74,30 @@ class SolveChart(ModelBase):
 
 class Convert(ModelBase):
 
-    __tablename__ = "cad_convert"
+    __tablename__ = "convert"
 
     convert_id = Column(Integer, primary_key=True, autoincrement=True)
-    source_path = Column(String(200), nullable=False)  # cad 的路径
-    de_type = Column(Integer, nullable=False)  # cad 的文件类型
-    target_path = Column(Integer, nullable=False)  # 目标文件的输出路径
-    target_type = Column(Integer, nullable=False)  # 目标文件的类型
-    convert_status = Column(Integer, nullable=False)  # 0 转换完成 1 正在转换 2 转换失败
-    covert_time = Column(String(15), nullable=True)  # 总共转换的时间
-    create_time = Column(DateTime, default=func.now())  # 创建时间
+    origin_file = Column(String(200), nullable=False)  # 源文件的路径
+    des_file = Column(String(200), nullable=True)  # 转换的目标文件
+    vf_file = Column(String(200), nullable=False)  # 可视化文件
+    convert_type = Column(Integer, nullable=False)  # 转换的类型
+    convert_status = Column(Integer, default=0, nullable=False)  # 转换状态 0 转换完成 1 正在转换 2 转换失败
+    convert_infos = Column(JSON, default={})  # 转换的一些输出结果
+    begin_time = Column(DateTime, default=func.now())  # 开始转换的时间
+    end_time = Column(DateTime, default=func.now())  # 转换失败
+
+
+class CadVisualize(ModelBase):
+
+    __tablename__ = "cad_visualized"
+
+    cv_id = Column(Integer, primary_key=True, autoincrement=True)
+    cad_path = Column(String(200), nullable=False)
+    des_path = Column(String(200), nullable=False)
+    vis_type = Column(Integer, nullable=False, default=1)  # 默认正在转换 0 转换完成 1 转换成功 2 转换失败
+    vis_info = Column(JSON, default={})  # 转换的一些信息
+    begin_time = Column(DateTime, default=func.now())
+    end_time = Column(DateTime, default=func.now())
 
 
 # engine = create_engine("mysql+mysqlconnector://root:Cdlmt#2019!@127.0.0.1:3306/Ashura")
