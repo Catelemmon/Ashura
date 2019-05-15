@@ -18,7 +18,6 @@ from utils.log_utils import get_logger
 db_logger = get_logger("db")
 
 
-
 class DB:
 
     # TODO 上下文管理器实现DB类
@@ -153,7 +152,7 @@ class DB:
         res_mapping = DB_2_JSON[SolveChart.__tablename__]
         try:
             solve_charts: List[SolveChart] = _session.query(SolveChart).filter(SolveChart.solve_id == solve_job_id,
-                                                                                SolveChart.iteration_step > begin).\
+                                                                                SolveChart.iteration_step >= begin).\
                 order_by(SolveChart.iteration_step.asc()).limit(50)
             cols = []
             for chart_model in solve_charts:
@@ -165,6 +164,59 @@ class DB:
             return cols
         except Exception:
             db_logger.exception("db-function query_solve_chart failed")
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_convert(cls, origin_path, output_dir, convert_type):
+        _session = DBsession()
+        convert_id = -1
+        try:
+            convert = Convert(
+                origin_path=origin_path,
+                output_dir=output_dir,
+                convert_type=convert_type,
+                convert_status=1,
+            )
+            _session.add(convert)
+            _session.commit()
+            convert_id = convert.convert_id
+            return convert_id, "写入数据库成功"
+        except Exception:
+            db_logger.exception("db-function write_convert failed")
+            return convert_id, "写入数据库失败"
+        finally:
+            _session.close()
+
+    @classmethod
+    def update_convert(cls, convert_id, convert_status, convert_infos):
+        _session = DBsession()
+        try:
+            _session.query(Convert.convert_id == convert_id).update({
+                Convert.convert_status: convert_status,
+                Convert.convert_infos: convert_infos,
+                Convert.end_time: datetime.now()
+            })
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function update_convert failed")
+        finally:
+            _session.close()
+
+    @classmethod
+    def query_convert(cls, convert_id):
+        _session = DBsession()
+        try:
+            convert = _session.query(Convert).filter(Convert.convert_id == convert_id).first()
+            res_mapping = DB_2_JSON[Convert.__tablename__]
+            res = {}
+            for key in res_mapping:
+                res[res_mapping[key]] = getattr(convert, key) if not key.endswith("time")\
+                    else str(getattr(convert, key))
+            return res
+        except Exception:
+            db_logger.exception("db-function query_convert failed")
+            return None
         finally:
             _session.close()
 

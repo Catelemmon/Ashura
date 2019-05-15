@@ -8,11 +8,12 @@
 """
 import copy
 from typing import Dict
-
+from gevent.pywsgi import WSGIServer
 from actions import solve_flow
 from flask import Flask
 from flask_restplus import Resource, Api, Namespace
 
+from actions.convert_flow import ConvertControler
 from actions.solve_flow import stop_solve
 from dbs import DB, SlurmDB
 from servers import AshuraServer
@@ -37,9 +38,19 @@ stop_solve_parser.add_argument("jobId", type=int, help="the id of job", location
 stop_solve_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
 solve_chart = ns.parser()
-solve_chart.add_argument("jobId", type=int, help="the job of job", location='form')
+solve_chart.add_argument("jobId", type=int, help="the id of job", location='form')
 solve_chart.add_argument("begin", type=int, help="the begin of iteration step", location='form')
 solve_chart.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+convert_parser = ns.parser()
+convert_parser.add_argument("origin-file", type=str, help="the path of the origin file", location='form')
+convert_parser.add_argument("output-dir", type=str,
+                            help="the directory that result of converting ouputs", location='form')
+convert_parser.add_argument("convert-type", type=int, help="the type of converter, "
+                                                           "example: 0 means cad converts to vtm, 1 means openfoam "
+                                                           "mesh converts to su2mesh and vtm", location='form')
+convert_status = ns.parser()
+convert_status.add_argument("convertId", type=int, help="the id of convert operation", location='form')
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -135,11 +146,49 @@ class SolveChart(Resource):
         return create_resp(0, msg="success", result=result)
 
 
+@ns.route("/common-convert")
+class CommonConvert(Resource):
+
+    """
+    :description 转换接口
+    """
+    @ns.doc(parser=convert_parser)
+    def post(self):
+        in_arg = dict(convert_parser.parse_args())
+        args_list = ["origin-file", "output-dir", "convert-type"]
+        for arg in args_list:
+            if arg not in in_arg:
+                return create_resp(1, msg=f"we didn't get arg!", result=None)
+        convert_id, msg = ConvertControler(in_arg["origin-file"],
+                                           in_arg["output-dir"], in_arg["convert-type"]).start_actions()
+        if convert_id == -1:
+            return create_resp(1, msg, result={})
+        else:
+            return create_resp(0, msg="success!", result={"convertId": convert_id})
+
+
+@ns.route("/convert-status")
+class ConvertStatus(Resource):
+    """
+    :description 转换的状态
+    """
+    @ns.doc(parser=convert_status)
+    def post(self):
+        in_arg = dict(convert_status.parse_args())
+        convert_id = in_arg.get("convertId", None)
+        if convert_id is not None:
+            res = DB.query_convert(convert_id)
+            return create_resp(0, msg="success!", result=res)
+        else:
+            return create_resp(1, msg=f"没有接收到convertId", result={})
+
+
 class HttpServer(AshuraServer):
 
     def _init(self):
         self._app = Flask("AshuraServer")
         self._api = Api(app=self._app, title="中间件接口文档", version="v0.1", description="无描述")
+        self.easy_wsgi_server = None
         self._api.add_namespace(ns)
 
     @classmethod
@@ -158,7 +207,8 @@ class HttpServer(AshuraServer):
         return self
 
     def server(self, options):
-        self._app.run(host=self.host, port=self.port, debug=self.is_debug, **options)
+        self.easy_wsgi_server = WSGIServer((self.host, self.port), self._app)
+        self.easy_wsgi_server.serve_forever()
 
     def __getattr__(self, item):
 
