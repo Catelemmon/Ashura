@@ -182,10 +182,10 @@ class DB:
             _session.add(convert)
             _session.commit()
             convert_id = convert.convert_id
-            return convert_id, "写入数据库成功"
+            return convert_id
         except Exception:
             db_logger.exception("db-function write_convert failed")
-            return convert_id, "写入数据库失败"
+            return convert_id
         finally:
             _session.close()
 

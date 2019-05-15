@@ -1,3 +1,4 @@
+gevent
 watchdog
 alembic==1.0.9
 aniso8601==6.0.0
