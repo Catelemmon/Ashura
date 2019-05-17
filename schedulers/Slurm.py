@@ -34,8 +34,8 @@ class Slurm(Scheduler.Scheduler):
         try:
             subprocess.run(["scancel", f"{slurm_id}"])
         except subprocess.CalledProcessError:
-            # logging
-            return -1
+            # TODO logging
+            return 1
 
     def send_job(self, work_dir, **kwargs):
         try:
@@ -48,11 +48,11 @@ class Slurm(Scheduler.Scheduler):
             return slurm_id
         except subprocess.CalledProcessError:
             scheduler_logger.exception("slurm创建作业失败")
-            return -1
+            return 1
         except AttributeError:
             # logging
             scheduler_logger.exception(f"参数错误 | {str(kwargs)}")
-            return -1
+            return 1
 
     def data_parse(self):
         pass

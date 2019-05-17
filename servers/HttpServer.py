@@ -59,6 +59,15 @@ convert_status = ns.parser()
 convert_status.add_argument("convertId", type=int, help="the id of convert operation", location='form')
 convert_status.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
+mesh_parser = ns.parser()
+mesh_parser.add_argument("work-path", type=str, help="workspace of mesh", location='form')
+mesh_parser.add_argument("cad-file-name", type=str, help="the path of cad", location='form')
+mesh_parser.add_argument("username", type=str, help="who sends the mesh", location='form')
+mesh_parser.add_argument("mesh-name", type=str, help="the name of mesh", location='form')
+mesh_parser.add_argument("mesh-app", type=int, help="mesh application", location='form')
+mesh_parser.add_argument("mesh-config", type=str, help="the config of mesh application", location='form')
+mesh_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
 RESPONSE_TEMPLATE = {
     "code": None,
     "msg": None,
@@ -111,9 +120,12 @@ class JobResults(Resource):
             return create_resp(1, msg="we didn't get jobId!", result=None)
 
         result = DB.query_solve_status(solve_id=job_id)
-
+        if result is None:
+            return create_resp(1, msg="slurm没有对应的作业", result=None)
         slurm_id = result["slurmId"]
         status = SlurmDB().query_job_status(slurm_id)
+        if status == -2:
+            return create_resp(1, msg="slurm中没有对应的作业", result=None)
         result["currentStep"] = result["currentStep"] + 1 if result["currentStep"] > 0 else 0
         result["slurmStatus"] = status
 
@@ -190,7 +202,19 @@ class ConvertStatus(Resource):
             res = DB.query_convert(convert_id)
             return create_resp(0, msg="success!", result=res)
         else:
-            return create_resp(1, msg=f"没有接收到convertId", result={})
+            return create_resp(1, msg=f"没有接收到convertId", result=None)
+
+
+@ns.route("/do-mesh")
+class DoMesh(Resource):
+
+    @ns.doc(parser=mesh_parser)
+    def post(self):
+        args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-app", "mesh-config"]
+        in_args = mesh_parser.parse_args()
+        for arg in args_list:
+            if arg not in in_args:
+                return create_resp(2, msg=f"未接收到{arg}", result=None)
 
 
 class HttpServer(AshuraServer):

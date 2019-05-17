@@ -193,7 +193,7 @@ class DB:
     def update_convert(cls, convert_id, convert_status, convert_infos):
         _session = DBsession()
         try:
-            _session.query(Convert.convert_id == convert_id).update({
+            _session.query(Convert).filter(Convert.convert_id == convert_id).update({
                 Convert.convert_status: convert_status,
                 Convert.convert_infos: convert_infos,
                 Convert.end_time: datetime.now()
@@ -214,6 +214,8 @@ class DB:
             for key in res_mapping:
                 res[res_mapping[key]] = getattr(convert, key) if not key.endswith("time")\
                     else str(getattr(convert, key))
+                if key == "convert_infos":
+                    res[res_mapping[key]] = json.dumps(res[res_mapping[key]])
             return res
         except Exception:
             db_logger.exception("db-function query_convert failed")
@@ -238,7 +240,11 @@ class SlurmDB(object):
         try:
 
             cursor.execute(f"select state from slurm_acct_db.linux_job_table where id_job={slurm_id};")
-            status = cursor.fetchone()[0]
+            res = cursor.fetchone()
+            if res:
+                status = res[0]
+            else:
+                status = -2
             return status
         except Exception:
             db_logger.exception("SlurmDB-function query_job_status failed")

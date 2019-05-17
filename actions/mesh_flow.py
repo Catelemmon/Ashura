@@ -8,5 +8,11 @@
 """
 
 
-def mesh_actions(path, params):
-    pass
+class MeshControler(object):
+
+    def __init__(self,
+                 work_path, cad_file_name, username, mesh_name, mesh_app, mesh_config,
+                 ):
+
+        pass
+

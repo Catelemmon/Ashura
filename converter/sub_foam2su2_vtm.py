@@ -5,10 +5,8 @@
 @contact: 1713856662a@gmail.com
 @file: sub_foam2su2_vtm.py
 @time: 2019/4/11 上午11:50
-
 """
 import codecs
-import sys
 
 from paraview.simple import *
 import os
@@ -16,7 +14,6 @@ import re
 import gc
 import json
 import collections
-
 
 class Foam2SU2Converter(object):
 
@@ -230,23 +227,20 @@ class Foam2SU2Converter(object):
 
 if __name__ == '__main__':
     # case_dir = "/home/cicada/workspace/paraview_workspace/Semi_Trailer_Truck_finemesh/case.foam"
-    res_l = []
-    def gen_res(Name, Nm_cell, Nm_point):
-        res = collections.OrderedDict()
-        # key_name =  "{}:".format(Name)
-        # value_cells = "     {0}.cells:{1}".format(Name, Nm_cell)
-        # value_points = "     {0}.points:{1}".format(Name, Nm_point)
-        # value_all = (value_cells, value_points)
-        res["label"] = Name
-        res["cell"] = Nm_cell
-        res["point"] = Nm_point
-        res_l.append(res)
+    def gen_res(point, cell):
+        res_0 = {}
+        res_0["cells"] = cell
+        res_0["points"] = point
+        return res_0
+
+
+    dict_ALL = {}
 
     case_dir = sys.argv[1]
     # case_dir = "C:\\Users\\Administrator\\Desktop\\airFoil2D\\case.foam"
     # case_dir = "/home/cicada/workspace/paraview_workspace/airplot/airplot.foam"
-    Load_vtm = sys.argv[2]
-    Load_su2 = sys.argv[3]
+    Load_su2 = sys.argv[2]
+    Load_vtm = sys.argv[3]
     # Load_su2 = "C:\\Users\\Administrator\\Desktop\\airFoil2D"
     (filepath, tempfilename) = os.path.split(case_dir)
     (loadpath, tempfilename2) = os.path.split(Load_su2)
@@ -292,18 +286,23 @@ if __name__ == '__main__':
     boundory_Cells = sum(Son_cells)
     All_name = block.GetClassName()
     All_cells = boundory_Cells + inter_cells
-    gen_res(All_name, All_cells, All_points)
-    gen_res("internalMesh", inter_cells, inter_point)
-    gen_res("Pathes", boundory_Cells, Number_Point)
 
+    dict_internal = {}
+    interjson =  gen_res(inter_cells, inter_point)
+    dict_internal["internalMesh"] = interjson
+    dict_ALL["VolumeMesh:"] = dict_internal
+
+    boundoryjson = {}
     for i in range(boundory.GetNumberOfBlocks()):
         Son_name = listMesh[i]
-        gen_res(Son_name, Son_cells[i], Son_points[i])
+        son_bound = gen_res(Son_cells[i], Son_points[i])
+        boundoryjson[Son_name] = son_bound
 
+    dict_ALL["boundary:"] = boundoryjson
+
+    # print(dict_ALL)
+    print json.dumps(dict_ALL)
     Vtm_path = load_vtmpath + "/" +load_vtmname + ".vtm"
     SaveData(Vtm_path, proxy=casefoam)
     Delete()
-    print(json.dumps(res_l))
     print("conversion vtm successful")
-
-

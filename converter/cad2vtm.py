@@ -13,7 +13,7 @@ import subprocess
 
 from utils.log_utils import get_logger
 
-convert_logger = get_logger("converter")
+convert_logger = get_logger("convert")
 
 
 class Cad2VtmConverter(object):
@@ -37,7 +37,7 @@ class Cad2VtmConverter(object):
                 return 0, json.loads(res.split("|")[1]), "cad转换成功"
             elif re.search("Error", output):
                 convert_logger.critical("cad转换错误 | script")
-                return -1, {}, "cad转换错误 | script"
+                return 2, {}, "cad转换错误 | script"
         except subprocess.CalledProcessError:
             convert_logger.exception("cad转换错误 | salome")
-            return -1, {}, "cad转换错误 | salome"
+            return 2, {}, "cad转换错误 | salome"

@@ -10,7 +10,7 @@ import codecs
 from pathlib import Path
 
 
-from configs.config import CAE_APPLICATION_TYPE
+from constants.maps import CAE_APPLICATION_TYPE
 from utils.log_utils import get_logger
 
 

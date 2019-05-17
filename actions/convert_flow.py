@@ -8,8 +8,10 @@
 """
 from importlib import import_module
 from multiprocessing import Process, ProcessError
+from pathlib import Path
 
 from constants.maps import CONVERT_CLASSES
+from converter.snipthumb import SnipThumb
 from dbs import DB
 from utils.log_utils import get_logger
 
@@ -23,10 +25,21 @@ class ConvertControler(object):
         self.des_file = des_file
         self.vf_file = vf_file
         self.thumb_path = thumb_path
+        self._path_adapt()
         self.convert_type = convert_type
         mdl_name, cls_name = CONVERT_CLASSES[convert_type]
         convert_class = getattr(import_module(mdl_name), cls_name)
         self.converter = convert_class(self.ori_file, self.des_file, self.vf_file)
+
+    def _path_adapt(self):
+        if self.des_file is not None:
+            if not Path(self.des_file).parent.exists():
+                Path(self.des_file).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if not Path(self.vf_file).parent.exists():
+            Path(self.vf_file).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if self.thumb_path is not None:
+            if not Path(self.thumb_path).parent.exists():
+                Path(self.thumb_path).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     def start_actions(self):
         core_logger.info(f"convert信息写入数据库! | CONVERT_CLASSES[convert_type]"
@@ -42,12 +55,12 @@ class ConvertControler(object):
         except ProcessError:
             DB.update_convert(convert_id, 1, {})
             core_logger.exception("开启转换进程失败")
-            return -1, "开启转换进程失败"
+            return 1, "开启转换进程失败"
 
     def asyc_convert(self, convert_id):
         core_logger.info(f"异步进行转换 | {convert_id}")
         status, conver_info, msg = self.converter.start()
-        core_logger.info("异步转换结束 | convert_id")
+        core_logger.info(f"异步转换结束 | {convert_id}")
         DB.update_convert(convert_id, status, conver_info)
         if self.thumb_path is not None:
-            pass  # 执行转换缩略图
+            SnipThumb(vf_file=self.vf_file, img_file=self.thumb_path).start()

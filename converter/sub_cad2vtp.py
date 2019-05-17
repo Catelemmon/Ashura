@@ -3,7 +3,7 @@
 ##
 # -*- coding: UTF-8 -*-
 
-'''
+"""
 脚本的流程为：使用salome打开.stp文件后，提取出里面的face，并保存至指定的文件夹
 删除文件夹中face的lines数据，并保存至RFace文件夹中
 重写RFace中每一个face的lines
@@ -11,7 +11,7 @@
 将重写后的face进行转换为vtp，并生成一个vtm文件，
 将face与wire信息写入vtm文件
 同时生成一个stl文件
-'''
+"""
 
 
 from paraview.simple import *

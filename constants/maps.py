@@ -16,8 +16,8 @@ CAE_APPLICATION_TYPE = (
 
 SU2_SOLVE_CONFIG_MAP = {
     "InitialCondition": "init_cfg",  # su2的初始条件
-    "BoundaryCondition": "bound_cfg",
-    "Run": "parl_cfg"
+    "BoundaryCondition": "bound_cfg",  # 边界条件
+    "Run": "parl_cfg"  # 并行配置
 }
 
 # JSON映射到SU2配置文件
@@ -63,6 +63,10 @@ DB_2_JSON = {
     },
     "convert": {
         "convert_id": "convertId",
+        "origin_file": "originFile",
+        "des_file": "desFile",
+        "vf_file": "vfFile",
+        "convert_type": "convertType",
         "convert_status": "convertStatus",
         "convert_infos": "convertInfos",
         "begin_time": "beginTime",

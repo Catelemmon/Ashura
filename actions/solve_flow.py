@@ -44,6 +44,9 @@ class SU2SolveController(object):
             if sub_config["name"] in SU2_SOLVE_CONFIG_MAP:
                 easy_args[SU2_SOLVE_CONFIG_MAP[sub_config["name"]]] = kw
             sub_option = sub_config["option"]
+            for child_option in sub_option:
+                kw[child_option["name"]] = kw[child_option["value"]]
+        return easy_args
 
     def start_solve(self, **params):
         pass
@@ -124,4 +127,4 @@ def stop_solve(solve_id):
         core_logger.info(f"杀死作业 | slurm_id {slurm_id} | solve_id {solve_id}")
         return 0, "success"
     else:
-        return -1, "the job has finished!"
+        return 1, "the job has finished!"
