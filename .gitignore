@@ -4,3 +4,4 @@
 /.vscode/
 configs/online_settings.py
 *.pyc
+/git_stats/
