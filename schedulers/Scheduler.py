@@ -32,8 +32,7 @@ class Scheduler:
         """
         pass
 
-    @classmethod
-    def send_job(cls, work_dir):
+    def send_job(self, work_dir, **kwargs):
         """
         发送作业
         :return:

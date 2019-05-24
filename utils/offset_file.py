@@ -14,7 +14,7 @@ def def_end_func(end_line, **kwargs):
 
 
 def offset_file(file_obspath, offset=0, end_func=def_end_func, **kwargs):
-    seek_file = open(file_obspath, encoding="utf-8", mode="r")
+    seek_file = open(file_obspath, encoding="utf-8", mode="r", errors="ignore")
     seek_file.seek(offset)
     while True:
         line = seek_file.readline()

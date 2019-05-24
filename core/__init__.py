@@ -13,4 +13,5 @@ RESULTS_TEMPLATE = {
     "results": None
 }
 
+from core.CFMesh2D import *
 

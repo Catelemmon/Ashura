@@ -15,6 +15,8 @@ from configs.local_settings import LOG_DIR
 import logging
 from logging import DEBUG
 
+loggers = {}
+
 
 def sentry_logger():
     # TODO: 实现sentry的日志记录
@@ -74,14 +76,23 @@ def default_logger(name=None, logger=None, level=None, logfile=None, message=Non
 
 
 def get_logger(logger_name="common", level=DEBUG, logfile=None):
-    logfile = logfile if logfile else PurePosixPath.joinpath(LOG_DIR,  f"{logger_name}.log")
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(level)
-    formatter = logging.Formatter('%(asctime)s :%(levelname)s  %(message)s')
-    fh = logging.FileHandler(logfile if logfile else PurePosixPath.joinpath(LOG_DIR, f"{logger_name}.log"))
-    fh.setFormatter(formatter)
-    streamh = logging.StreamHandler()
-    streamh.setFormatter(formatter)
+
+    global loggers
+
+    if loggers.get(logger_name):
+        return loggers.get(logger_name)
+    else:
+        logfile = logfile if logfile else PurePosixPath.joinpath(LOG_DIR,  f"{logger_name}.log")
+        logger = logging.getLogger(logger_name, )
+        logger.setLevel(level)
+        formatter = logging.Formatter('%(asctime)s :%(levelname)s  %(message)s')
+        fh = logging.FileHandler(logfile if logfile else PurePosixPath.joinpath(LOG_DIR, f"{logger_name}.log"))
+        fh.setFormatter(formatter)
+        streamh = logging.StreamHandler()
+        streamh.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.addHandler(streamh)
+        loggers[logger_name] = logger
     return logger
 
 
@@ -89,3 +100,8 @@ if LOG_SYS == "logging":
     logger_dec = default_logger
 elif LOG_SYS == "sentry":
     logger_dec = sentry_logger
+
+
+if __name__ == '__main__':
+    test = get_logger("test")
+    test.info("日了狗")

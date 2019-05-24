@@ -3,7 +3,7 @@
 """
 @author: cicada
 @contact: 1713856662a@gmail.com
-@file: CFMesh.py
+@file: CFMesh2D.py
 @time: 2019/5/17 上午9:48 
 """
 from typing import Dict

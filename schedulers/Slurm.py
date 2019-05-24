@@ -37,12 +37,15 @@ class Slurm(Scheduler.Scheduler):
             # TODO logging
             return 1
 
-    def send_job(self, work_dir, **kwargs):
+    def send_job(self, work_dir, launch_script=None, **kwargs):
         try:
+            if launch_script is None:
+                launch_script = str(Path(work_dir).joinpath("solve.sh"))
             data = self._render_script(**kwargs)
-            self._write_script(data, str(Path(work_dir).joinpath("solve.sh")))
+            self._write_script(data, launch_script)
             username = kwargs.get("username", "middleware")
-            res = subprocess.check_output(['sbatch', '-A', f'{username}', 'solve.sh'], cwd=work_dir)
+            launch_script_name = Path(launch_script).name
+            res = subprocess.check_output(['sbatch', '-A', f'{username}', launch_script_name], cwd=work_dir)
             res = res.decode("utf-8")
             slurm_id = int(re.search("\d+", res).group())
             return slurm_id

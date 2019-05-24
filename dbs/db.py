@@ -85,6 +85,8 @@ class DB:
         _session = DBsession()
         try:
             solve_status = _session.query(SolveStatus).filter(SolveStatus.solve_id == solve_id).first()
+            if solve_status is None:
+                return solve_status
             res_mapping = DB_2_JSON[SolveStatus.__tablename__]
             result = {}
             for attr in res_mapping:
@@ -160,6 +162,8 @@ class DB:
                 for attr in res_mapping:
                     col[res_mapping[attr]] = getattr(chart_model, attr)
                     col["datetime"] = str(getattr(chart_model, "create_time"))
+                    if attr == "multi_fields":
+                        col[res_mapping[attr]] = json.dumps(col[res_mapping[attr]])
                 cols.append(col)
             return cols
         except Exception:
@@ -220,6 +224,85 @@ class DB:
         except Exception:
             db_logger.exception("db-function query_convert failed")
             return None
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_mesh(cls, meshing_path, cad_path, username, mesh_app, mesh_config, launch_script):
+        _session = DBsession()
+        mesh_id = -1
+        try:
+            mesh = Mesh(
+                meshing_path=meshing_path,
+                cad_path=cad_path,
+                username=username,
+                mesh_app=mesh_app,
+                mesh_config=mesh_config,
+                launch_script=launch_script
+            )
+            _session.add(mesh)
+            _session.commit()
+            mesh_id = mesh.mesh_id
+            return mesh_id
+        except Exception:
+            db_logger.exception("db-function write_mesh failed")
+            return mesh_id
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_mesh_status(cls, mesh_id, core_num, slurm_id, log_file, error_file):
+        _session = DBsession()
+        try:
+            ms = MeshStatus(
+                mesh_id=mesh_id,
+                core_num=core_num,
+                slurm_id=slurm_id,
+                slurm_status=0,
+                log_file=log_file,
+                error_file=error_file
+            )
+            _session.add(ms)
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function write_mesh_status faild")
+        finally:
+            _session.close()
+
+    @classmethod
+    def update_mesh_status(cls, mesh_id, current_step):
+        _session = DBsession()
+        try:
+            _session.query(MeshStatus).filter(MeshStatus.mesh_id == mesh_id).update({
+                MeshStatus.current_step: current_step
+            })
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function update_mesh_status failed!")
+
+    @classmethod
+    def compete_mesh_step(cls, mesh_id):
+        _session = DBsession()
+        try:
+            ms = _session.query(MeshStatus).filter(MeshStatus.mesh_id == mesh_id).first()
+            ms.current_step = ms.total_step
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function compete_mesh_step failed!")
+
+    @classmethod
+    def query_mesh_status(cls, mesh_id):
+        _session = DBsession()
+        try:
+            ms = _session.query(MeshStatus).filter(MeshStatus.mesh_id == mesh_id).first()
+            res_mapping = DB_2_JSON[MeshStatus.__tablename__]
+            res = {}
+            for attr in res_mapping:
+                res[res_mapping[attr]] = getattr(ms, attr)
+            return res
+        except Exception:
+            db_logger.exception("db-function query_mesh_status failed!")
+            return {}
         finally:
             _session.close()
 

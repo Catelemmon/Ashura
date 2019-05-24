@@ -29,8 +29,10 @@ class Foam2su2Converter(object):
         if foam_mesh_path.endswith(".zip"):
             self.foamcase_zip: str = foam_mesh_path
             self.foam_mesh_path = foam_mesh_path.split(".")[0] + "/case.foam"
-        else:
+        elif foam_mesh_path.endswith(".foam"):
             self.foam_mesh_path = foam_mesh_path
+        else:
+            raise ValueError(f"错误的foam文件 | {foam_mesh_path}")
         self.output_su2_path = output_su2_path
         self.vf_file = vf_file
         self.command = command

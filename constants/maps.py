@@ -71,9 +71,23 @@ DB_2_JSON = {
         "convert_infos": "convertInfos",
         "begin_time": "beginTime",
         "end_time": "endTime"
+    },
+    "mesh_status": {
+        "mesh_id": "meshId",
+        "core_num": "core_Num",
+        "slurm_id": "slurmId",
+        "slurm_status": "slurmStatus",
+        "total_step": "totalStep",
+        "current_step": "currentStep",
+        "log_file": "logFile",
+        "error_file": "errrorFile",
     }
 }
 
+MESH_APP = (
+    "CFMesh2D",
+    "CFMesh",
+)
 
 # 参数映射到数据库
 ARGS_2_DB = {

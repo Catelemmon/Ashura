@@ -80,6 +80,7 @@ class SU2SolveOpt(SolveOpt):
                 config_obj.write(data)
         except Exception:
             core_logger.exception(f"仿真配置文件写入异常 | {config_path}")
+            
     def ready_solve_dir(self, **kwargs):
         script_data = self.render_configs(**kwargs)
         su2_config_path = Path(self.solve_dir).joinpath(self.su2_cfg_name)

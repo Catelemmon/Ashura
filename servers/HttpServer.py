@@ -7,16 +7,20 @@
 @time: 2019/4/19 下午2:55 
 """
 import copy
+import json
 from typing import Dict
 from gevent.pywsgi import WSGIServer
 from actions import solve_flow
 from flask import Flask
 from flask_restplus import Resource, Api, Namespace
-
+from actions.mesh_flow import MeshControler
 from actions.convert_flow import ConvertControler
 from actions.solve_flow import stop_solve
 from dbs import DB, SlurmDB
 from servers import AshuraServer
+from utils.log_utils import get_logger
+
+http_server_logger = get_logger("http_server")
 
 ns = Namespace("/", description="中间件接口文档!")
 
@@ -67,6 +71,11 @@ mesh_parser.add_argument("mesh-name", type=str, help="the name of mesh", locatio
 mesh_parser.add_argument("mesh-app", type=int, help="mesh application", location='form')
 mesh_parser.add_argument("mesh-config", type=str, help="the config of mesh application", location='form')
 mesh_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+mesh_status_parser = ns.parser()
+mesh_status_parser.add_argument("mesh-id", type=int, help="the id of mesh", location='form')
+mesh_status_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -162,6 +171,8 @@ class SolveChart(Resource):
         if job_id is None:
             return create_resp(1, msg="we didn't get jobId!", result=None)
         begin = arg.get("begin", 0)
+        if begin is None:
+            begin = 0
         result = DB.query_solve_chart(solve_job_id=job_id, begin=begin)
         return create_resp(0, msg="success", result=result)
 
@@ -180,9 +191,13 @@ class CommonConvert(Resource):
         for arg in args_list:
             if arg not in in_arg:
                 return create_resp(1, msg=f"we didn't get arg!", result=None)
-        convert_id, msg = ConvertControler(in_arg["origin-file"],
-                                           in_arg.get("des-file", ""), in_arg["vf-file"],
-                                           in_arg["convert-type"], in_arg.get("thumb-path", None)).start_actions()
+        try:
+
+            convert_id, msg = ConvertControler(in_arg["origin-file"],
+                                               in_arg.get("des-file", ""), in_arg["vf-file"],
+                                               in_arg["convert-type"], in_arg.get("thumb-path", None)).start_actions()
+        except Exception:
+            return create_resp(1, msg="上传文件错误 | 请上传正确的文件", result={})
         if convert_id == -1:
             return create_resp(1, msg, result={})
         else:
@@ -211,10 +226,28 @@ class DoMesh(Resource):
     @ns.doc(parser=mesh_parser)
     def post(self):
         args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-app", "mesh-config"]
+        args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-config"]
         in_args = mesh_parser.parse_args()
         for arg in args_list:
             if arg not in in_args:
                 return create_resp(2, msg=f"未接收到{arg}", result=None)
+        mc = MeshControler(work_path=in_args["work-path"],
+                           cad_file_name=in_args["cad-file-name"],
+                           username=in_args["username"],
+                           mesh_name=in_args["mesh-name"],
+                           # mesh_app=in_args["mesh-app"],
+                           mesh_config=json.loads(in_args["mesh-config"]))
+        mesh_id = mc.start_actions()
+        return create_resp(0, "success!", {"meshId": mesh_id})
+
+
+@ns.route("/mesh-status")
+class MeshStatus(Resource):
+
+    @ns.doc(parsr=mesh_status_parser)
+    def post(self):
+        args_list = ["mesh-id", "accesstoken"]
+        # TODO 实现MeshStatus
 
 
 class HttpServer(AshuraServer):
@@ -241,7 +274,7 @@ class HttpServer(AshuraServer):
         return self
 
     def server(self, options):
-        self.easy_wsgi_server = WSGIServer((self.host, self.port), self._app)
+        self.easy_wsgi_server = WSGIServer((self.host, self.port), self._app, log=http_server_logger)
         self.easy_wsgi_server.serve_forever()
 
     def __getattr__(self, item):

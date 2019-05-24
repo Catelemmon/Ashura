@@ -30,7 +30,7 @@ class Solve(ModelBase):
     mesh_path = Column(String(200), nullable=False)  # 网格文件的路径
     username = Column(String(20), default="middleware")  # 创建solve_job的用户
     solve_app = Column(Integer, default=0)  # 默认是su2
-    solve_config = Column(JSON, nullable=False)  # json配置文件路径
+    solve_config = Column(JSON, nullable=False)  # json配置文件
     launch_script = Column(String(200), nullable=False)  # 启动脚本
     create_time = Column(DateTime, default=func.now())  # 作业的创建时间
 
@@ -55,7 +55,7 @@ class SolveResults(ModelBase):
 
     __tablename__ = "sovle_results"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    _id = Column(Integer, primary_key=True, autoincrement=True)
     solve_id = Column(Integer, nullable=False)
     post_results = Column(JSON, nullable=False)  # 后处理的结果文件(兼容OpenFoam和SU2)
     create_time = Column(DateTime, default=func.now())  # 结果创建的时间
@@ -85,6 +85,46 @@ class Convert(ModelBase):
     convert_infos = Column(JSON, default={})  # 转换的一些输出结果
     begin_time = Column(DateTime, default=func.now())  # 开始转换的时间
     end_time = Column(DateTime, default=func.now())  # 转换失败
+
+
+class Mesh(ModelBase):
+
+    __tablename__ = "mesh"
+
+    mesh_id = Column(Integer, primary_key=True, autoincrement=True)
+    meshing_path = Column(String(200), nullable=False)
+    cad_path = Column(String(200), nullable=False)
+    username = Column(String(20), default="middleware")
+    mesh_app = Column(Integer, nullable=False)
+    mesh_config = Column(JSON, nullable=False)
+    launch_script = Column(String(200), nullable=False)
+    create_time = Column(DateTime, default=func.now())
+
+
+class MeshStatus(ModelBase):
+
+    __tablename__ = "mesh_status"
+
+    _id = Column(Integer, primary_key=True, autoincrement=True)
+    mesh_id = Column(Integer, nullable=False)
+    core_num = Column(Integer, nullable=False)
+    slurm_id = Column(Integer, nullable=False)
+    slurm_status = Column(Integer, nullable=False)
+    total_step = Column(Integer, nullable=False, default=100)
+    current_step = Column(Integer, nullable=False, default=0)
+    log_file = Column(String(200), nullable=False)
+    error_file = Column(String(200), nullable=False)
+    create_time = Column(DateTime, default=func.now())
+
+
+class MeshResult(ModelBase):
+
+    __tablename__ = "mesh_result"
+
+    _id = Column(Integer, primary_key=True, autoincrement=True)
+    mesh_id = Column(Integer, nullable=False)
+    mesh_results = Column(JSON, nullable=False)
+    create_time = Column(DateTime, default=func.now())
 
 
 # engine = create_engine("mysql+mysqlconnector://root:Cdlmt#2019!@127.0.0.1:3306/Ashura")
