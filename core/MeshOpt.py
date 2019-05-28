@@ -6,6 +6,7 @@
 @file: MeshOpt.py
 @time: 19-3-28 上午11:06 
 """
+import copy
 from importlib import import_module
 from typing import Dict
 
@@ -30,7 +31,7 @@ class MeshOpt:
     def _from_parts(cls, init=True, **kwargs):
         self = object.__new__(cls)
         pars: Dict = cls._parse(kwargs)
-        self.options: Dict = kwargs
+        self.options: Dict = copy.deepcopy(kwargs)
         for key in pars:
             setattr(self, key, pars[key])
             self.options.pop(key)
@@ -40,7 +41,7 @@ class MeshOpt:
 
     @classmethod
     def _parse(cls, kwargs: Dict):
-        return {}
+        return kwargs
 
     def _init(self):
         pass

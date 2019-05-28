@@ -13,7 +13,6 @@ import os
 import re
 import gc
 import json
-import collections
 
 class Foam2SU2Converter(object):
 

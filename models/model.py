@@ -80,6 +80,7 @@ class Convert(ModelBase):
     origin_file = Column(String(200), nullable=False)  # 源文件的路径
     des_file = Column(String(200), nullable=True)  # 转换的目标文件
     vf_file = Column(String(200), nullable=False)  # 可视化文件
+    thumb_nail = Column(String(200), nullable=False)  # 缩略图文件
     convert_type = Column(Integer, nullable=False)  # 转换的类型
     convert_status = Column(Integer, default=0, nullable=False)  # 转换状态 0 转换完成 1 正在转换 2 转换失败
     convert_infos = Column(JSON, default={})  # 转换的一些输出结果
@@ -124,6 +125,15 @@ class MeshResult(ModelBase):
     _id = Column(Integer, primary_key=True, autoincrement=True)
     mesh_id = Column(Integer, nullable=False)
     mesh_results = Column(JSON, nullable=False)
+    create_time = Column(DateTime, default=func.now())
+
+
+class MeshConvert(ModelBase):
+
+    __tablename__ = "mesh_convert"
+    _id = Column(Integer, primary_key=True, autoincrement=True)
+    mesh_id = Column(Integer, nullable=False)
+    convert_id = Column(Integer, nullable=False)
     create_time = Column(DateTime, default=func.now())
 
 

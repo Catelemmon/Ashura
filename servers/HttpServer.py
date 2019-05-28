@@ -16,6 +16,7 @@ from flask_restplus import Resource, Api, Namespace
 from actions.mesh_flow import MeshControler
 from actions.convert_flow import ConvertControler
 from actions.solve_flow import stop_solve
+from actions.su2mesh_flow import SU2MeshControler
 from dbs import DB, SlurmDB
 from servers import AshuraServer
 from utils.log_utils import get_logger
@@ -43,7 +44,7 @@ stop_solve_parser.add_argument("accesstoken", type=str, help="the token to attac
 
 solve_chart = ns.parser()
 solve_chart.add_argument("jobId", type=int, help="the id of job", location='form')
-solve_chart.add_argument("begin", type=int, help="the begin of iteration step", location='form')
+solve_chart.add_argument("iterationStep", type=int, help="the begin of iteration step", location='form')
 solve_chart.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
 convert_parser = ns.parser()
@@ -65,7 +66,7 @@ convert_status.add_argument("accesstoken", type=str, help="the token to attach m
 
 mesh_parser = ns.parser()
 mesh_parser.add_argument("work-path", type=str, help="workspace of mesh", location='form')
-mesh_parser.add_argument("cad-file-name", type=str, help="the path of cad", location='form')
+mesh_parser.add_argument("cad-file-path", type=str, help="the path of cad", location='form')
 mesh_parser.add_argument("username", type=str, help="who sends the mesh", location='form')
 mesh_parser.add_argument("mesh-name", type=str, help="the name of mesh", location='form')
 mesh_parser.add_argument("mesh-app", type=int, help="mesh application", location='form')
@@ -73,9 +74,22 @@ mesh_parser.add_argument("mesh-config", type=str, help="the config of mesh appli
 mesh_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
 mesh_status_parser = ns.parser()
-mesh_status_parser.add_argument("mesh-id", type=int, help="the id of mesh", location='form')
+mesh_status_parser.add_argument("meshId", type=int, help="the id of mesh", location='form')
 mesh_status_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
+su2_mesh_parser = ns.parser()
+su2_mesh_parser.add_argument("work-path", type=str, help="workspace of mesh", location='form')
+su2_mesh_parser.add_argument("cad-file-path", type=str, help="the path of cad", location='form')
+su2_mesh_parser.add_argument("vf-path", type=str, help="the path of visual file", location='form')
+su2_mesh_parser.add_argument("thumb-path", type=str, help="image path of visual file", location='form')
+su2_mesh_parser.add_argument("username", type=str, help="who sends the mesh", location='form')
+su2_mesh_parser.add_argument("mesh-name", type=str, help="the name of mesh", location='form')
+su2_mesh_parser.add_argument("mesh-app", type=int, help="mesh application", location='form')
+su2_mesh_parser.add_argument("mesh-config", type=str, help="the config of mesh application", location='form')
+su2_mesh_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+su2mesh_status_parser = ns.parser()
+su2mesh_status_parser.add_argument("meshId", type=int, help="the id of mesh", location='form')
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -116,7 +130,7 @@ class DoSolve(Resource):
 
 
 @ns.route("/solve-status")
-class JobResults(Resource):
+class JobStatus(Resource):
     """
     :description 获取仿真的结果
     """
@@ -130,7 +144,7 @@ class JobResults(Resource):
 
         result = DB.query_solve_status(solve_id=job_id)
         if result is None:
-            return create_resp(1, msg="slurm没有对应的作业", result=None)
+            return create_resp(1, msg="没有该仿真作业的状态", result=None)
         slurm_id = result["slurmId"]
         status = SlurmDB().query_job_status(slurm_id)
         if status == -2:
@@ -138,7 +152,7 @@ class JobResults(Resource):
         result["currentStep"] = result["currentStep"] + 1 if result["currentStep"] > 0 else 0
         result["slurmStatus"] = status
 
-        return create_resp(0, msg="", result=result)
+        return create_resp(0, msg="success", result=result)
 
 
 @ns.route("/stop-job")
@@ -170,7 +184,7 @@ class SolveChart(Resource):
         job_id = arg.get("jobId", None)
         if job_id is None:
             return create_resp(1, msg="we didn't get jobId!", result=None)
-        begin = arg.get("begin", 0)
+        begin = arg.get("iterationStep", 0)
         if begin is None:
             begin = 0
         result = DB.query_solve_chart(solve_job_id=job_id, begin=begin)
@@ -225,14 +239,14 @@ class DoMesh(Resource):
 
     @ns.doc(parser=mesh_parser)
     def post(self):
-        args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-app", "mesh-config"]
-        args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-config"]
+        # args_list = ["work-path", "cad-file-name", "username", "mesh-name", "mesh-app", "mesh-config"]
+        args_list = ["work-path", "cad-file-path", "username", "mesh-name", "mesh-config"]
         in_args = mesh_parser.parse_args()
         for arg in args_list:
             if arg not in in_args:
                 return create_resp(2, msg=f"未接收到{arg}", result=None)
         mc = MeshControler(work_path=in_args["work-path"],
-                           cad_file_name=in_args["cad-file-name"],
+                           cad_file_name=in_args["cad-file-path"],
                            username=in_args["username"],
                            mesh_name=in_args["mesh-name"],
                            # mesh_app=in_args["mesh-app"],
@@ -241,13 +255,70 @@ class DoMesh(Resource):
         return create_resp(0, "success!", {"meshId": mesh_id})
 
 
+@ns.route("/su2mesh")
+class SU2Mesh(Resource):
+
+    @ns.doc(parser=su2_mesh_parser)
+    def post(self):
+        args_list = ["work-path", "cad-file-path",
+                     "vf-path", "thumb-path", "username", "mesh-name",
+                     "mesh-app", "mesh-config"]
+        in_args = su2_mesh_parser.parse_args()
+        for arg in args_list:
+            if arg not in in_args:
+                return create_resp(2, msg=f"未接收到参数{arg}", result=None)
+        su2mc = SU2MeshControler(
+            work_path=in_args["work-path"],
+            cad_file_path=in_args["cad-file-path"],
+            vf_path=in_args["vf-path"],
+            thumb_path=in_args["thumb-path"],
+            username=in_args["username"],
+            mesh_name=in_args["mesh-name"],
+            mesh_app=in_args["mesh-app"],
+            mesh_config=json.loads(in_args["mesh-config"])
+        )
+        mesh_id, msg = su2mc.start_actions()
+        return create_resp(0, msg, {"meshId": mesh_id})
+
+
+@ns.route("/su2mesh-status")
+class SU2MeshStatus(Resource):
+
+    @ns.doc(parser=su2mesh_status_parser)
+    def post(self):
+        in_args = su2mesh_status_parser.parse_args()
+        mesh_id = in_args.get("meshId", None)
+        if mesh_id is None:
+            return create_resp(2, msg=f"未接收到参数meshId", result=None)
+        result = DB.query_mesh_convert(mesh_id)
+        slurm_id = result["slurmId"]
+        status = SlurmDB().query_job_status(slurm_id)
+        if status == -2:
+            return create_resp(1, msg="slurm中没有对应的作业", result=None)
+        result["slurmStatus"] = status
+        return create_resp(0, msg="success", result=result)
+
+
 @ns.route("/mesh-status")
 class MeshStatus(Resource):
 
-    @ns.doc(parsr=mesh_status_parser)
+    @ns.doc(parser=mesh_status_parser)
     def post(self):
-        args_list = ["mesh-id", "accesstoken"]
-        # TODO 实现MeshStatus
+        in_arg = dict(mesh_status_parser.parse_args())
+        mesh_id = in_arg.get("meshId", None)
+        if mesh_id is None:
+            return create_resp(1, msg="we didn't get meshId", result=None)
+        result = DB.query_mesh_status(mesh_id)
+        if result is None:
+            return create_resp(1, msg="没有该网格作业的状态", result=None)
+        slurm_id = result["slurmId"]
+        status = SlurmDB().query_job_status(slurm_id)
+        if status == -2:
+            return create_resp(1, msg="slurm中没有对应的作业", result=None)
+        result["slurmStatus"] = status
+        result["currentStep"] = result["totalStep"] - 1 if \
+            result["currentStep"] > result["totalStep"] else result["currentStep"]
+        return create_resp(0, msg="success", result=result)
 
 
 class HttpServer(AshuraServer):

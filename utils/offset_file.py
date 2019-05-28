@@ -19,5 +19,6 @@ def offset_file(file_obspath, offset=0, end_func=def_end_func, **kwargs):
     while True:
         line = seek_file.readline()
         if end_func(line, **kwargs):
+            seek_file.close()
             break
         yield line.strip(), seek_file.tell()

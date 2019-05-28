@@ -121,10 +121,10 @@ def stop_solve(solve_id):
     slurm_id = db.query_solve_status(solve_id)["slurmId"]
     status = SlurmDB().query_job_status(slurm_id)
     if status is 0 or status is 1:
-        solve_dir = DB().query_solve_path(65)
+        solve_dir = DB().query_solve_path(solve_id)
         DIR_MONITOR.kill_watcher(solve_dir)
         Slurm.kill_job(slurm_id)
-        core_logger.info(f"杀死作业 | slurm_id {slurm_id} | solve_id {solve_id}")
+        core_logger.info(f"杀死杀死仿真作业 | slurm_id {slurm_id} | solve_id {solve_id}")
         return 0, "success"
     else:
         return 1, "the job has finished!"

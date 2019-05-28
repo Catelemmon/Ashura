@@ -31,6 +31,7 @@ class Foam2su2Converter(object):
             self.foam_mesh_path = foam_mesh_path.split(".")[0] + "/case.foam"
         elif foam_mesh_path.endswith(".foam"):
             self.foam_mesh_path = foam_mesh_path
+            self.foamcase_zip = None
         else:
             raise ValueError(f"错误的foam文件 | {foam_mesh_path}")
         self.output_su2_path = output_su2_path
@@ -64,23 +65,26 @@ class Foam2su2Converter(object):
             return 2, {}, "SU2网格转换失败"
 
     def _ready_foam_case(self):
-        unzip_dir = str(Path(self.foamcase_zip).parent)  # 执行unzip命令的目录
-        zip_name = str(Path(self.foamcase_zip).name)  # zip包的名字
-        zip_ouput_dir = Path(self.foamcase_zip).name.split(".")[0]  # zip输出到什么的文件夹
 
         try:
-            _ = subprocess.check_output(["unzip", "-o", f"{zip_name}", "-d", f"{zip_ouput_dir}"], cwd=unzip_dir)
-            foam_path = None
-            for root, dirs, files in os.walk(Path(unzip_dir).joinpath(zip_ouput_dir)):
-                for sf in files:
-                    if sf.endswith(".foam"):
-                        foam_path = Path(root).joinpath(sf)
-                        break
-            if foam_path:
-                self.foam_mesh_path = str(foam_path)
-                return 0, {}, ""
+            if self.foamcase_zip is not None:
+                unzip_dir = str(Path(self.foamcase_zip).parent)  # 执行unzip命令的目录
+                zip_name = str(Path(self.foamcase_zip).name)  # zip包的名字
+                zip_ouput_dir = Path(self.foamcase_zip).name.split(".")[0]  # zip输出到什么的文件夹
+                _ = subprocess.check_output(["unzip", "-o", f"{zip_name}", "-d", f"{zip_ouput_dir}"], cwd=unzip_dir)
+                foam_path = None
+                for root, dirs, files in os.walk(Path(unzip_dir).joinpath(zip_ouput_dir)):
+                    for sf in files:
+                        if sf.endswith(".foam"):
+                            foam_path = Path(root).joinpath(sf)
+                            break
+                if foam_path:
+                    self.foam_mesh_path = str(foam_path)
+                    return 0, {}, ""
+                else:
+                    return 2, {}, "错误的openfoam案例包"
             else:
-                return 2, {}, "错误的openfoam案例包"
+                return 0, {}, ""
         except subprocess.CalledProcessError:
             convert_logger.exception("解压openfoam算例包失败")
             return 2, {}, "解压openfoam算例包失败"

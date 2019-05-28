@@ -122,11 +122,11 @@ class ConversionCad(res_dic):
 
         # 创建stl文件
         Face_stl_path = self.outputfilePath2
-        Face_File_stl = open(Face_stl_path, 'a')
+        Face_File_stl = open(Face_stl_path, 'w')
 
         # 创建vtm文件，并写入开头
         Face_VTM = self.outputfilePath1
-        file_vtm = open(Face_VTM, 'a')
+        file_vtm = open(Face_VTM, 'w')
         file_vtm.write(
             '<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64">' + '\n')
         file_vtm.write('  <vtkMultiBlockDataSet>' + '\n')
@@ -138,7 +138,7 @@ class ConversionCad(res_dic):
                 Flag_json = Flag_json + 1
                 Read_Face_Path = list_load_path[2] + SystemSlash + "Face_" + str(i + 1) + ".vtk"
                 Read_RFace_Path = list_load_path[4] + SystemSlash + "Face_" + str(i + 1) + ".vtk"
-                Read_Wire_Path = list_load_path[3] + SystemSlash + "Wire_" + str(i + 1) + ".vtk"
+
 
                 print("rewrite face：{}".format(Read_Face_Path))
                 Read_file = open(Read_Face_Path, "r")
@@ -147,7 +147,6 @@ class ConversionCad(res_dic):
                 with open(Read_RFace_Path, "w") as R_Face_file:
                     data_Face = re.sub("LINES[  \d\n]+", "", data_Face)
                     R_Face_file.write(data_Face)
-                    R_Face_file.close()
                 # 重写lines信息，并提出所有的cell的pointid构成lines
                 RFace_write_path = open(Read_RFace_Path, 'a')
                 Read_File_Path = Read_RFace_Path
@@ -195,7 +194,6 @@ class ConversionCad(res_dic):
                 with open(list_load_path[3] + SystemSlash + "Wire_" + str(i + 1) + ".vtk", "w") as R_Wire_file:
                     data_Wire = re.sub("POLYGONS[  \d\n]+", "", data_Wire)
                     R_Wire_file.write(data_Wire)
-                    R_Face_file.close()
 
                 face_vtk = LegacyVTKReader(FileNames=Read_RFace_Path)
                 # 使其表面光滑
@@ -244,6 +242,7 @@ class ConversionCad(res_dic):
             file_vtm.write('    </Block>' + '\n')
             file_vtm.write('    <Block index="1" name="Wires">' + '\n')
             for i in range(NM_files):
+                Read_Wire_Path = list_load_path[3] + SystemSlash + "Wire_" + str(i + 1) + ".vtk"
                 wire_vtk = LegacyVTKReader(FileNames=Read_Wire_Path)
                 # 转换.vtm
                 Load_File_Path = list_load_path[6] + SystemSlash + "Wire_" + str(i + 1) + ".vtp"
@@ -262,11 +261,12 @@ class ConversionCad(res_dic):
 
             res_json = {"faceNumber": NM_files}
             print("result json|{}".format(json.dumps(res_json)))
-            Face_File_stl.close()
         except Exception:
             print("Error:conversion died")
             return None
         del SystemSlash, list_load_path
+        file_vtm.close()
+        Face_File_stl.close()
         return Flag_json
 
 

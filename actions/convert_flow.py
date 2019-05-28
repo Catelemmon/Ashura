@@ -49,12 +49,12 @@ class ConvertControler(object):
     def start_actions(self):
         core_logger.info(f"convert信息写入数据库! | {CONVERT_CLASSES[self.convert_type]}"
                          f" |{self.ori_file} | {self.des_file} | {self.vf_file }")
-        convert_id = DB.write_convert(self.ori_file, self.des_file, self.vf_file, self.convert_type)
+        convert_id = DB.write_convert(self.ori_file, self.des_file, self.vf_file, self.convert_type, thumb_nail=self.thumb_path)
         if convert_id == -1:
             return -1, "数据库写入失败"
-        core_logger.info(f"创建进程进行转换")
+        core_logger.info(f"创建进程进行转换 | convert_id: {convert_id}")
         try:
-            convert_pro = Process(target=self.asyc_convert, args=(convert_id, ))
+            convert_pro = Process(target=self._asyc_convert, args=(convert_id,))
             convert_pro.start()
             core_logger.info(f"异步转换进程开始 | pid: {convert_pro.pid} | convert_id: {convert_id}")
             return convert_id, "success!"
@@ -63,7 +63,7 @@ class ConvertControler(object):
             core_logger.exception("开启转换进程失败")
             return 1, "开启转换进程失败"
 
-    def asyc_convert(self, convert_id):
+    def _asyc_convert(self, convert_id):
         core_logger.info(f"异步进行转换 | {convert_id}")
         try:
             status, conver_info, msg = self.converter.start()

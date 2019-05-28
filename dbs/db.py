@@ -86,7 +86,7 @@ class DB:
         try:
             solve_status = _session.query(SolveStatus).filter(SolveStatus.solve_id == solve_id).first()
             if solve_status is None:
-                return solve_status
+                return {}
             res_mapping = DB_2_JSON[SolveStatus.__tablename__]
             result = {}
             for attr in res_mapping:
@@ -172,7 +172,7 @@ class DB:
             _session.close()
 
     @classmethod
-    def write_convert(cls, origin_file, des_file, vf_file, convert_type):
+    def write_convert(cls, origin_file, des_file, vf_file, convert_type, thumb_nail):
         _session = DBsession()
         convert_id = -1
         try:
@@ -182,6 +182,7 @@ class DB:
                 vf_file=vf_file,
                 convert_type=convert_type,
                 convert_status=1,
+                thumb_nail=thumb_nail
             )
             _session.add(convert)
             _session.commit()
@@ -303,6 +304,72 @@ class DB:
         except Exception:
             db_logger.exception("db-function query_mesh_status failed!")
             return {}
+        finally:
+            _session.close()
+
+    @classmethod
+    def query_mesh_dir(cls, mesh_id):
+        _session = DBsession()
+        try:
+            meshing_path = _session.query(Mesh).filter(Mesh.mesh_id == mesh_id).first().meshing_path
+            return meshing_path
+        except Exception:
+            db_logger.exception("db-function query_mesh_dir failed!")
+            return None
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_mesh_convert(cls, mesh_id, convert_id):
+        _session = DBsession()
+        try:
+            mc = MeshConvert(
+                mesh_id=mesh_id,
+                convert_id=convert_id,
+            )
+            _session.add(mc)
+            _session.commit()
+            return 0
+        except Exception:
+            db_logger.exception("db-function write_mesh_convert failed!")
+            return 1
+        finally:
+            _session.close()
+
+    @classmethod
+    def query_mesh_convert(cls, mesh_id):
+        _session = DBsession()
+        try:
+            result = {}
+            ms = _session.query(MeshStatus).filter(MeshStatus.mesh_id == mesh_id).first()
+            if ms is None:
+                return result
+            res_mapping = DB_2_JSON[MeshStatus.__tablename__]
+            for attr in res_mapping:
+                if attr.endswith("time"):
+                    result["mesh"+res_mapping[attr]] = str(getattr(ms, attr))
+                else:
+                    result[res_mapping[attr]] = getattr(ms, attr)
+            mc = _session.query(MeshConvert).filter(MeshConvert.mesh_id == mesh_id).first()
+            if mc is None:
+                res_mapping = DB_2_JSON[Convert.__tablename__]
+                for attr in res_mapping:
+                    result[res_mapping[attr]] = None
+                return result
+            convert_id = mc.convert_id
+            cs = _session.query(Convert).filter(Convert.convert_id == convert_id).first()
+            res_mapping = DB_2_JSON[Convert.__tablename__]
+            for attr in res_mapping:
+                if attr.endswith("time"):
+                    result["convert" + res_mapping[attr]] = str(getattr(cs, attr))
+                else:
+                    result[res_mapping[attr]] = getattr(cs, attr)
+                if attr == "convert_infos":
+                    result[res_mapping[attr]] = json.dumps(result[res_mapping[attr]])
+            return result
+        except Exception:
+            db_logger.exception("db-function query_mesh_convert failed")
+            return 1
         finally:
             _session.close()
 

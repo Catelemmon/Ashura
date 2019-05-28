@@ -58,11 +58,8 @@ class CFMeshResultHandler(RegexMatchingEventHandler):
         res_file = event.src_path
         save_offset = 0
         line_matches = 0
-        convert_logger.\
-            info(f"读取带offset的文件 | file: {event.src_path} | offset: {self.offset} | mesh_id: {self.mesh_id}")
         for line, offset in offset_file(res_file, offset=self.offset):
             if re.search("Finished", line):
-                print(line)
                 line_matches += 1
             if re.search("End", line):
                 DB.compete_mesh_step(mesh_id=self.mesh_id)

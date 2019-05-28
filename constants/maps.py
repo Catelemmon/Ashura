@@ -66,6 +66,7 @@ DB_2_JSON = {
         "origin_file": "originFile",
         "des_file": "desFile",
         "vf_file": "vfFile",
+        "thumb_nail": "thumbNail",
         "convert_type": "convertType",
         "convert_status": "convertStatus",
         "convert_infos": "convertInfos",
@@ -74,13 +75,14 @@ DB_2_JSON = {
     },
     "mesh_status": {
         "mesh_id": "meshId",
-        "core_num": "core_Num",
+        "core_num": "coreNum",
         "slurm_id": "slurmId",
         "slurm_status": "slurmStatus",
         "total_step": "totalStep",
         "current_step": "currentStep",
         "log_file": "logFile",
-        "error_file": "errrorFile",
+        "error_file": "errorFile",
+        "create_time": "createTime"
     }
 }
 

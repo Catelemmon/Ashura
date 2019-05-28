@@ -1,0 +1,145 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                |
+| \\      /  F ield         | cfMesh: A library for mesh generation          |
+|  \\    /   O peration     |                                                |
+|   \\  /    A nd           | Author: Franjo Juretic                         |
+|    \\/     M anipulation  | E-mail: franjo.juretic@c-fields.com            |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version   2.0;
+    format    ascii;
+    class     dictionary;
+    location  "system";
+    object    meshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+surfaceFile "solid.stl";
+maxCellSize 1;
+boundaryCellSize 1;
+decomposePolyhedraIntoTetsAndPyrs 1;
+localRefinement
+{
+    "Face_2|Face_3"
+    {
+		// cellSize    0.01;
+        additionalRefinementLevels        7;
+
+    }
+    "Face_8"
+    {
+		cellSize    0.001;
+        // additionalRefinementLevels        7;
+
+    }
+    "Face_9"
+    {
+		cellSize    0.0005;
+        // additionalRefinementLevels        9;
+
+    }
+    "Face_4|Face_5"
+    {
+		// cellSize    0.005;
+        additionalRefinementLevels        8;
+
+    }
+    "Face_6|Face_7"
+    {
+		// cellSize    0.005;
+        additionalRefinementLevels        8;
+
+    }
+}
+
+// objectRefinements
+// {
+//     refinementBox1
+//     {
+//         type	box;
+//         cellSize    0.1;
+//         centre	(0.75 0.8 0);
+//         lengthX	2;
+//         lengthY	1.6;
+//         lengthZ	0.6;
+//     }
+//     refinementBox2
+//     {
+//         type	box;
+//         cellSize    0.5;
+//         centre	(4 2 0);
+//         lengthX	12;
+//         lengthY	4;
+//         lengthZ	5;
+//     }
+// }
+boundaryLayers //边界层的厚度被边界的cell size控制，产生的边界层的厚度跟cell size的厚度相似
+{
+    optimiseLayer	1;
+    symmetryPlaneLayerTopology	0;
+    untangleLayers	0;
+    patchBoundaryLayers
+    {
+
+        "Face_2|Face_3|Face_4|Face_5|Face_6|Face_7|Face_8|Face_9"
+        {
+            maxFirstLayerThickness	0.0005;
+            nLayers	10;
+            thicknessRatio	1.3;
+            allowDiscontinuity 0;
+        }
+    }
+    // optimisationParameters
+    // {
+    //     nSmoothNormals      5;
+    //     maxNumIterations    15;
+    //     reCalculateNormals  1;
+    //     relThicknessTol     0.5;
+    // }
+
+}
+renameBoundary
+{
+    defaultName     body;
+    defaultType     wall;
+	newPatchNames
+    {
+		Face_1
+        {
+            newName     inlet;
+            type        patch;
+        }
+        Face_14
+        {
+            newName    outlet;
+            type        patch;
+        }
+		Face_10
+        {
+            newName     symmetry;
+            type        symmetry;
+        }
+		Face_11
+        {
+            newName     bottom;
+            type        wall;
+        }
+		Face_12
+        {
+            newName     top;
+            type        wall;
+        }
+		Face_13
+        {
+            newName     side;
+            type        wall;
+        }
+
+    }
+}
+
+
+// ************************************************************************* //

@@ -10,7 +10,9 @@ import json
 import os
 import re
 import subprocess
+from pathlib import Path
 
+from configs import SCRIPTS_PATH
 from utils.log_utils import get_logger
 
 convert_logger = get_logger("convert")
@@ -23,7 +25,8 @@ POSTFIX = (
 class Cad2VtmConverter(object):
 
     def __init__(self, ori_file, des_file, vf_file,
-                 command="salome -t -w 1 -- python ./sub_cad2vtp.py {ori_file} {vf_file} {des_file}"):
+                 command='/share/home/fermat/salome/salome -t -w 1 -- python ./sub_cad2vtp.py {ori_file} {vf_file} {'
+                         'des_file}'):
         self.ori_file: str = ori_file
         flag = True
         for postfix in POSTFIX:
