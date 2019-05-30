@@ -124,7 +124,7 @@ class DB:
     def update_solve_current_step(cls, solve_job_id, current_step):
         _session = DBsession()
         try:
-            _session.query(SolveStatus).filter(SolveStatus.solve_id == solve_job_id).\
+            _session.query(SolveStatus).filter(SolveStatus.solve_id == solve_job_id). \
                 update({SolveStatus.current_step: current_step})
             _session.commit()
         except Exception:
@@ -154,7 +154,7 @@ class DB:
         res_mapping = DB_2_JSON[SolveChart.__tablename__]
         try:
             solve_charts: List[SolveChart] = _session.query(SolveChart).filter(SolveChart.solve_id == solve_job_id,
-                                                                                SolveChart.iteration_step >= begin).\
+                                                                               SolveChart.iteration_step >= begin). \
                 order_by(SolveChart.iteration_step.asc()).limit(50)
             cols = []
             for chart_model in solve_charts:
@@ -217,7 +217,7 @@ class DB:
             res_mapping = DB_2_JSON[Convert.__tablename__]
             res = {}
             for key in res_mapping:
-                res[res_mapping[key]] = getattr(convert, key) if not key.endswith("time")\
+                res[res_mapping[key]] = getattr(convert, key) if not key.endswith("time") \
                     else str(getattr(convert, key))
                 if key == "convert_infos":
                     res[res_mapping[key]] = json.dumps(res[res_mapping[key]])
@@ -347,7 +347,7 @@ class DB:
             res_mapping = DB_2_JSON[MeshStatus.__tablename__]
             for attr in res_mapping:
                 if attr.endswith("time"):
-                    result["mesh"+res_mapping[attr]] = str(getattr(ms, attr))
+                    result["mesh" + res_mapping[attr]] = str(getattr(ms, attr))
                 else:
                     result[res_mapping[attr]] = getattr(ms, attr)
             mc = _session.query(MeshConvert).filter(MeshConvert.mesh_id == mesh_id).first()
@@ -370,6 +370,56 @@ class DB:
         except Exception:
             db_logger.exception("db-function query_mesh_convert failed")
             return 1
+        finally:
+            _session.close()
+
+    @classmethod
+    def write_compute_domain(cls, cad_file_path,
+                             vf_path):
+        _session = DBsession()
+        try:
+            cd = ComputeDomain(
+                cad_file_path - cad_file_path,
+                vf_path=vf_path
+            )
+            _session.add(cd)
+            _session.commit()
+            return cd.domain_id
+        except Exception:
+            db_logger.exception("db-function write_compute_domain failed")
+            return -1
+        finally:
+            _session.close()
+
+    @classmethod
+    def upgrade_compute_domain_status(cls, domain_id, status):
+        _session = DBsession()
+        try:
+            _session.query(ComputeDomain).filter(ComputeDomain.domain_id == domain_id).update(
+                {ComputeDomain.status: status}
+            )
+            _session.commit()
+        except Exception:
+            db_logger.exception("db-function upgrade_compute_domain_status failed")
+        finally:
+            _session.close()
+
+    @classmethod
+    def query_compute_domain(cls, domain_id):
+        _session = DBsession()
+        try:
+            cd = _session.query(ComputeDomain).filter(ComputeDomain.domain_id == domain_id).first()
+            res_mapping = DB_2_JSON(ComputeDomain.__tablename__)
+            res = {}
+            for attr in res_mapping:
+                if attr.endswith("time"):
+                    res[res_mapping[attr]] = str(getattr(cd, attr))
+                else:
+                    res[res_mapping[attr]] = getattr(cd, attr)
+            return res
+        except Exception:
+            db_logger.exception("db-function query_compute_domain failed")
+            return None
         finally:
             _session.close()
 

@@ -4,7 +4,7 @@ from paraview.simple import *
 import os
 import sys
 import salome
-#salome.salome_init()
+# salome.salome_init()
 import salome_notebook
 import GEOM
 from salome.geom import geomBuilder
@@ -25,16 +25,18 @@ class res_dic(object):
     def res_mes(self):
         (filepath, tempfilename) = os.path.split(self.Indic)
         (filename, extension) = os.path.splitext(tempfilename)
-        return filepath,tempfilename,filename,extension
+        return filepath, tempfilename, filename, extension
+
 
 class ConversionCad(res_dic):
 
-    def __init__(self, inputfilePath, outputfilePath1, outputfilePath2, SystemSlash ="/"):
+    def __init__(self, inputfilePath, outputfilePath1, outputfilePath2, SystemSlash="/"):
         self.inputfilePath = inputfilePath
         self.outputfilePath1 = outputfilePath1
         self.outputfilePath2 = outputfilePath2
         self.SystemSlash = SystemSlash
-    def MakeFile(self,creatpath):
+
+    def MakeFile(self, creatpath):
         if os.path.exists(creatpath):
             shutil.rmtree(creatpath)
         os.makedirs(creatpath)
@@ -77,14 +79,14 @@ class ConversionCad(res_dic):
         Load_Vtp_wire = Tup_outputVTM[0] + SystemSlash + "wire"
         self.MakeFile(Load_Vtp_wire)
 
-        return Load_File_File,Load_Con_File,Load_Vtk_face,\
-               Load_Vtk_wire,Load_Vtk_Rface,Load_Vtp_face,\
-               Load_Vtp_wire,\
-               Tup_input,Tup_outputVTM,Tup_output
+        return Load_File_File, Load_Con_File, Load_Vtk_face, \
+               Load_Vtk_wire, Load_Vtk_Rface, Load_Vtp_face, \
+               Load_Vtp_wire, \
+               Tup_input, Tup_outputVTM, Tup_output
 
-    def start_convtk(self, Flag_json = 0):
+    def start_convtk(self, Flag_json=0):
         SystemSlash = self.SystemSlash
-        list_load_path = self._creat_dic() # 存储目录列表
+        list_load_path = self._creat_dic()  # 存储目录列表
 
         # 利用 salome 打开 stp 文件，并进行拆分，另存为 vtk 文件
         salome.salome_init()
@@ -138,7 +140,6 @@ class ConversionCad(res_dic):
                 Flag_json = Flag_json + 1
                 Read_Face_Path = list_load_path[2] + SystemSlash + "Face_" + str(i + 1) + ".vtk"
                 Read_RFace_Path = list_load_path[4] + SystemSlash + "Face_" + str(i + 1) + ".vtk"
-
 
                 print("rewrite face：{}".format(Read_Face_Path))
                 Read_file = open(Read_Face_Path, "r")

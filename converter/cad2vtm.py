@@ -24,6 +24,7 @@ POSTFIX = (
 
 class Cad2VtmConverter(object):
 
+    # TODO solame 加入配置文件
     def __init__(self, ori_file, des_file, vf_file,
                  command='/share/home/fermat/salome/salome -t -w 1 -- python ./sub_cad2vtp.py {ori_file} {vf_file} {'
                          'des_file}'):

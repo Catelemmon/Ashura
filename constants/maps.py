@@ -83,6 +83,13 @@ DB_2_JSON = {
         "log_file": "logFile",
         "error_file": "errorFile",
         "create_time": "createTime"
+    },
+    "compute_domain": {
+        "domain_id": "domainId",
+        "cad_file_path": "cadFilePath",
+        "status": "status",
+        "vf_path": "vfPath",
+        "create_time": "createTime"
     }
 }
 
@@ -93,10 +100,14 @@ MESH_APP = (
 
 # 参数映射到数据库
 ARGS_2_DB = {
-
 }
+
 
 CONVERT_CLASSES = [
     ("cad2vtm", "Cad2VtmConverter"),
     ("foam2su2_vtm", "Foam2su2Converter")
 ]
+
+OPENFOAM_CLASSES = {
+    "meshDict": "dictionary",
+}

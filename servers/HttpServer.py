@@ -13,6 +13,8 @@ from gevent.pywsgi import WSGIServer
 from actions import solve_flow
 from flask import Flask
 from flask_restplus import Resource, Api, Namespace
+
+from actions.compute_domain_flow import ComputeDomainControler
 from actions.mesh_flow import MeshControler
 from actions.convert_flow import ConvertControler
 from actions.solve_flow import stop_solve
@@ -90,6 +92,19 @@ su2_mesh_parser.add_argument("accesstoken", type=str, help="the token to attach 
 
 su2mesh_status_parser = ns.parser()
 su2mesh_status_parser.add_argument("meshId", type=int, help="the id of mesh", location='form')
+su2_mesh_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+compute_domain_parser = ns.parser()
+compute_domain_parser.add_argument("cad-file-path", type=str, help="the path of cad", location='form')
+compute_domain_parser.add_argument("param-field", type=str,
+                                   help="the parameters for generate compute domain (json type)",
+                                   location='form')
+compute_domain_parser.add_argument("vf-path", type=str, help="the path of visual file", location='form')
+compute_domain_parser.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
+
+compute_domain_status = ns.parser()
+compute_domain_status.add_argument("domain-id", type=int, help="the id of domain", location='form')
+compute_domain_status.add_argument("accesstoken", type=str, help="the token to attach middleware", location='form')
 
 RESPONSE_TEMPLATE = {
     "code": None,
@@ -319,6 +334,43 @@ class MeshStatus(Resource):
         result["currentStep"] = result["totalStep"] - 1 if \
             result["currentStep"] > result["totalStep"] else result["currentStep"]
         return create_resp(0, msg="success", result=result)
+
+
+@ns.route("/compute-domain-create")
+class ComputeDomainVisualize(Resource):
+
+    @ns.doc(parser=compute_domain_parser)
+    def post(self):
+        in_arg = dict(compute_domain_parser)
+        arg_list = ("cad-file-path", "param-field", "vf-path")
+        for arg in arg_list:
+            if arg not in in_arg:
+                return create_resp(1, msg=f"没有收到参数{arg}", result={})
+        cad_file_path = in_arg["cad-file-path"]
+        param_field = in_arg["param-field"]
+        visual_file_path = in_arg["vf-path"]
+        dom_crt = ComputeDomainControler(cad_file_path, json.loads(param_field), visual_file_path)
+        domain_id, msg = dom_crt.start_actions()
+        if domain_id == -1:
+            return create_resp(1, msg=msg, result={})
+        elif domain_id >= 0:
+            return create_resp(0, msg, result={"domain_id": domain_id})
+
+
+@ns.route("/compute-domain-status")
+class ComputeDomainStatus(Resource):
+
+    @ns.doc(parser=compute_domain_status)
+    def post(self):
+        in_args = dict(compute_domain_status)
+        domain_id = in_args.get("domain-id", None)
+        if domain_id is None:
+            return create_resp(1, msg="没有接收到domain-id", result=None)
+        domain_status = DB.query_compute_domain(domain_id)
+        if domain_status is None:
+            return create_resp(1, msg=f"未查询到domain状态 | domain-id: {domain_id}", result=None)
+        else:
+            return create_resp(0, msg="success", result=domain_status)
 
 
 class HttpServer(AshuraServer):

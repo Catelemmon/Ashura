@@ -25,7 +25,7 @@ core_logger = get_logger("core")
 
 class SU2SolveController(object):
 
-    def __init__(self):
+    def __init__(self, work_path, mesh_file_name, username, job_name, solve_app, solve_config):
         pass
 
     def _args_parse(self, **params):

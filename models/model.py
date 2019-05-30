@@ -137,6 +137,17 @@ class MeshConvert(ModelBase):
     create_time = Column(DateTime, default=func.now())
 
 
+class ComputeDomain(ModelBase):
+
+    __tablename__ = "compute_domain"
+
+    domain_id = Column(Integer, primary_key=True, autoincrement=True)
+    cad_file_path = Column(String(200), nullable=False)
+    status = Column(Integer, nullable=False, default=1)
+    vf_path = Column(String(200), nullable=False)
+    create_time = Column(DateTime, default=func.now())
+
+
 # engine = create_engine("mysql+mysqlconnector://root:Cdlmt#2019!@127.0.0.1:3306/Ashura")
 engine = create_engine("mysql+mysqlconnector://lmt:Lmt#2018@192.168.6.22:3306/fermat_cfd",
                        pool_size=10, pool_recycle=600, pool_timeout=30, pool_pre_ping=True)
