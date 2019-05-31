@@ -76,7 +76,9 @@ class creat_box(object):
             self.del_line(save_vtk_dic, 5)
             self.del_line(save_vtk_dic, 6)
 
-            filebox = open(stl_path + "/" + self.stl_name, "a")
+            # 将六个面信息一起写入一个文件
+            temall_stl = stl_path + "/" + "tem_file.stl"
+            filebox = open(temall_stl, "a")
             self.merge_boxface(1, filebox)
             self.merge_boxface(2, filebox)
             self.merge_boxface(3, filebox)
@@ -87,16 +89,17 @@ class creat_box(object):
 
             add_stl = open(stl_path + self.stl_name, "a")
 
-            with open(stl_path + "/" + self.stl_name) as w:
+            with open(temall_stl) as w:
                 wi = w.readlines()
                 for i in range(len(wi)):
                     add_stl.write(wi[i])
-        except:
+            add_stl.close()
+        except Exception:
             print("stl,vtk生成失败")
 
         try:
             # 转换vtp,并生成vtm
-            Face_VTM = self.vtm_path + "{}.vtm".format(self.vtm_name)
+            Face_VTM = self.vtm_path + "{}".format(self.vtm_name)
             file_vtm = open(Face_VTM, 'w')
             file_vtm.write(
                 '<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64">' + '\n')
@@ -126,6 +129,7 @@ class creat_box(object):
             os.remove(stl_path + "boxFace_4.stl")
             os.remove(stl_path + "boxFace_5.stl")
             os.remove(stl_path + "boxFace_6.stl")
+            os.remove(stl_path + "tem_file.stl")
         except:
             print("vtm生成失败")
 

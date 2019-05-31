@@ -20,13 +20,13 @@ convert_logger = get_logger("convert")
 class BondingBoxCreator(object):
 
     def __init__(self, ori_stl: str, des_stl: str, vf_file: str, dia_point1: Tuple, dia_point2: Tuple,
-                 command='/share/home/fermat/salome/salome -t -w 1 -- python ./sub_build_box.py {ori_stl} {des_stl}'
-                         ' {vf_file} {"dia_point1"} {dia_point2}'):
+                 command='/data/home/liuheng/software/salome/salome -t -w 1 -- python ./sub_build_box.py {ori_stl} {des_stl}'
+                         ' {vf_file} "{dia_point1}" "{dia_point2}"'):
         self.dia_point2 = dia_point2
         self.dia_point1 = dia_point1
         if not ori_stl.endswith("stl"):
             raise ValueError(f"错误的错误模型 | {ori_stl}")
-        if not vf_file.endswith("stl"):
+        if not vf_file.endswith("vtm"):
             raise ValueError(f"错误的可视化文件 | {vf_file}")
         self.vf_file = vf_file
         self.des_stl = des_stl
@@ -42,6 +42,9 @@ class BondingBoxCreator(object):
         except subprocess.CalledProcessError:
             convert_logger.exception(f"创建生成box的子进程失败")
             return 2, "创建生成box的子进程失败"
+        except PermissionError:
+            convert_logger.exception(f"subprocess库权限不足")
+            return 2, "subprocess库权限不足"
         output = output.decode("utf-8")
         if re.search('creat_box_successful', output):
             convert_logger.info('creat_box_successful')
@@ -61,5 +64,8 @@ class BondingBoxCreator(object):
 
 
 if __name__ == '__main__':
-    # TODO 测试
-    pass
+    bbc = BondingBoxCreator("/data/home/liuheng/cadcases/AileM6_with_thick_TE.stl",
+                            "/data/home/liuheng/cadcases/boxstl.stl",
+                            "/data/home/liuheng/cadcases/vf.vtm",
+                            (0, 0, 0), (25, 25, 25))
+    bbc.start()
