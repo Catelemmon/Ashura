@@ -44,7 +44,8 @@ class SU2MeshControler(object):
         self.lanuch_script = Path(self.work_path).joinpath("meshing.sh")
 
     def _mesh_configs_parse(self):
-        
+        # TODO 解析
+        pass
 
     def start_actions(self):
         core_logger.info(f"划分网格信息写入数据库 | mesh_app: {self.mesh_app}"

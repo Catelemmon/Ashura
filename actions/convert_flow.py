@@ -49,7 +49,8 @@ class ConvertControler(object):
     def start_actions(self):
         core_logger.info(f"convert信息写入数据库! | {CONVERT_CLASSES[self.convert_type]}"
                          f" |{self.ori_file} | {self.des_file} | {self.vf_file }")
-        convert_id = DB.write_convert(self.ori_file, self.des_file, self.vf_file, self.convert_type, thumb_nail=self.thumb_path)
+        convert_id = DB.write_convert(self.ori_file, self.des_file, self.vf_file, self.convert_type,
+                                      thumb_nail=self.thumb_path)
         if convert_id == -1:
             return -1, "数据库写入失败"
         core_logger.info(f"创建进程进行转换 | convert_id: {convert_id}")
