@@ -10,7 +10,6 @@ import json
 import os
 import re
 import subprocess
-from typing import List
 
 from configs import PVPYTHON_PATH
 from utils.log_utils import get_logger

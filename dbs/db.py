@@ -25,7 +25,8 @@ class DB:
     def __init__(self):
         pass
 
-    def write_solve(self, **kwargs):
+    @classmethod
+    def write_solve(cls, **kwargs):
         _session = DBsession()
         try:
             solve = Solve(
@@ -46,7 +47,8 @@ class DB:
         finally:
             _session.close()
 
-    def query_solve_path(self, solve_id):
+    @classmethod
+    def query_solve_path(cls, solve_id):
         _session = DBsession()
         try:
             solve_path = _session.query(Solve).filter(Solve.solve_id == solve_id).first().solve_path
@@ -214,6 +216,8 @@ class DB:
         _session = DBsession()
         try:
             convert = _session.query(Convert).filter(Convert.convert_id == convert_id).first()
+            if convert is None:
+                return None
             res_mapping = DB_2_JSON[Convert.__tablename__]
             res = {}
             for key in res_mapping:
@@ -280,6 +284,8 @@ class DB:
             _session.commit()
         except Exception:
             db_logger.exception("db-function update_mesh_status failed!")
+        finally:
+            _session.close()
 
     @classmethod
     def compete_mesh_step(cls, mesh_id):
@@ -290,6 +296,8 @@ class DB:
             _session.commit()
         except Exception:
             db_logger.exception("db-function compete_mesh_step failed!")
+        finally:
+            _session.close()
 
     @classmethod
     def query_mesh_status(cls, mesh_id):
@@ -332,7 +340,7 @@ class DB:
             return 0
         except Exception:
             db_logger.exception("db-function write_mesh_convert failed!")
-            return 1
+            return -1
         finally:
             _session.close()
 
@@ -366,6 +374,7 @@ class DB:
                     result[res_mapping[attr]] = getattr(cs, attr)
                 if attr == "convert_infos":
                     result[res_mapping[attr]] = json.dumps(result[res_mapping[attr]])
+
             return result
         except Exception:
             db_logger.exception("db-function query_mesh_convert failed")
@@ -459,3 +468,7 @@ class SlurmDB(object):
             pass
         finally:
             cursor.close()
+
+
+if __name__ == '__main__':
+    DB.write_mesh_convert(132, 92)

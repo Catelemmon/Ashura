@@ -12,6 +12,13 @@ from pathlib import Path
 
 from configs import TEMPLATES_FILES_PATH
 from core import MeshOpt
+from parsers.CFmeshConfigParsers import cfmesh_config_parser
+from parsers.OFDictParser import OFDictParse
+from utils.log_utils import get_logger
+
+core_logger = get_logger("core")
+
+# TODO 添加日志
 
 
 class CFMesh(MeshOpt):
@@ -20,6 +27,7 @@ class CFMesh(MeshOpt):
 
     def _init(self, **pars):
         self._render_command()
+        self.cad_file_name = Path(self.cad_file).name
 
     def _render_command(self):
         self.command_dict = {"mesh_command": "cartesianMesh"}
@@ -27,10 +35,13 @@ class CFMesh(MeshOpt):
     def get_commands_dict(self):
         return self.command_dict
 
-    def render_configs(self, parser=None, **mesh_args):
-        # TODO 实现cfmesh的配置文件的渲染
-        shutil.copy(str(Path(TEMPLATES_FILES_PATH).joinpath('CFMeshDictTemp')),
-                    str(Path(self.system_folder).joinpath("meshDict")))
+    def render_configs(self):
+        # shutil.copy(str(Path(TEMPLATES_FILES_PATH).joinpath('CFMeshDictTemp')),
+        #             str(Path(self.system_folder).joinpath("meshDict")))
+        cfmesh_config_dict = cfmesh_config_parser(self.mesh_config, {"surfaceFile": f"\"{self.cad_file_name}\""})
+        self.ofdp = OFDictParse(str(Path(self.system_folder).joinpath("meshDict")))
+        self.ofdp.hard_render(cfmesh_config_dict)
+        self.ofdp.write_config()
 
     def ready_mesh_dir(self):
         # 准备mesh的工作目录

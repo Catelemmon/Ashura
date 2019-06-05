@@ -10,7 +10,7 @@ import copy
 from importlib import import_module
 from typing import Dict
 
-from constants.maps import CAE_APPLICATION_TYPE, MESH_APP
+from constants.maps import MESH_APP
 from utils.log_utils import get_logger
 
 
@@ -53,7 +53,7 @@ class MeshOpt:
     def ready_mesh_dir(self, **kwargs):
         pass
 
-    def render_configs(self, parser=None, **mesh_args):
+    def render_configs(self, mesh_config: Dict, cad_name_config: Dict, parser=None, **mesh_args):
         pass
 
     @classmethod

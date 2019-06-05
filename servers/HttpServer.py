@@ -158,7 +158,7 @@ class JobStatus(Resource):
             return create_resp(1, msg="we didn't get jobId!", result=None)
 
         result = DB.query_solve_status(solve_id=job_id)
-        if result is None:
+        if result is None or result == {}:
             return create_resp(1, msg="没有该仿真作业的状态", result=None)
         slurm_id = result["slurmId"]
         status = SlurmDB().query_job_status(slurm_id)
@@ -244,7 +244,10 @@ class ConvertStatus(Resource):
         convert_id = in_arg.get("convertId", None)
         if convert_id is not None:
             res = DB.query_convert(convert_id)
-            return create_resp(0, msg="success!", result=res)
+            if res:
+                return create_resp(0, msg="success!", result=res)
+            else:
+                return create_resp(1, msg=f"不存在该转换任务 | {convert_id}", result=None)
         else:
             return create_resp(1, msg=f"没有接收到convertId", result=None)
 
@@ -311,6 +314,17 @@ class SU2MeshStatus(Resource):
         if status == -2:
             return create_resp(1, msg="slurm中没有对应的作业", result=None)
         result["slurmStatus"] = status
+
+        if result["slurmStatus"] == 3 and result["convertStatus"] is None:
+            result["convertStatus"] = 1
+        if result["slurmStatus"] >= 4:
+            result["convertStatus"] = 2
+        if result["slurmStatus"] <= 1:
+            result["convertStatus"] = 1
+        if result["convertStatus"] == 0:
+            result["convertStatus"] = 3
+        else:
+            result["convertStatus"] = 1
         return create_resp(0, msg="success", result=result)
 
 

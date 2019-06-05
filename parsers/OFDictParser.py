@@ -110,7 +110,7 @@ class OFDictParse(object):
                 pass
 
     def write_config(self):
-        with codecs.open(self.fdict_name, mode="w", encoding="utf-8") as fdict_obj:
+        with codecs.open(self.fdict, mode="w", encoding="utf-8") as fdict_obj:
             fdict_obj.write(self._data)
 
     def merge_config(self, up_data, down_data):
@@ -132,8 +132,8 @@ class OFDictParse(object):
         return self._data
 
 
-if __name__ == '__main__':
-    mesh_dict = OFDictParse("meshDict")
-    d = {"假装配置文件1": {"假装配|置文件2": {"inc1": 1, "inc2": 0.22}, "假装配置文件3": "dododo"}}
-    print(mesh_dict.hard_render(d))
-    mesh_dict.write_config()
+# if __name__ == '__main__':
+#     mesh_dict = OFDictParse("meshDict")
+#     d = {"假装配置文件1": {"假装配|置文件2": {"inc1": 1, "inc2": 0.22}, "假装配置文件3": "dododo"}}
+#     print(mesh_dict.hard_render(d))
+#     mesh_dict.write_config()

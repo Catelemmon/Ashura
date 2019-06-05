@@ -33,8 +33,8 @@ class ConvertControler(object):
             self.converter = convert_class(self.ori_file, self.des_file, self.vf_file)
         except ValueError:
             core_logger.exception("创建转换类失败")
+            core_logger.info("ConvertControler 类创建成功")
             raise
-        core_logger.info("ConvertControler 类创建成功")
 
     def _path_adapt(self):
         if self.des_file is not None:

@@ -33,6 +33,7 @@ class SU2MeshControler(object):
                  ):
         self.work_path = work_path
         self.cad_file_path = cad_file_path
+        self.cad_name = Path(cad_file_path).name
         self.vf_path = vf_path
         self.thumb_path = thumb_path
         self.des_path = str(Path(work_path).joinpath(Path(self.cad_file_path).name.split(".")[0] + ".su2"))
@@ -42,10 +43,6 @@ class SU2MeshControler(object):
         self.mesh_config: Dict = mesh_config
         self.core_num = 10
         self.lanuch_script = Path(self.work_path).joinpath("meshing.sh")
-
-    def _mesh_configs_parse(self):
-        # TODO 解析
-        pass
 
     def start_actions(self):
         core_logger.info(f"划分网格信息写入数据库 | mesh_app: {self.mesh_app}"
@@ -65,14 +62,22 @@ class SU2MeshControler(object):
             return 1, "开启网格进程失败"
         return mesh_id, "success!"
 
+    def _easily_parse(self):
+        for single_arg in self.mesh_config["meshParams"]["args"]:
+            name = single_arg.get("name", None)
+            if name == "processors_number":
+                self.num_proc = single_arg["formSchema"]["value"]["processorsNumber"]["processorsNumber"]
+                return
+
     def _asyc_mesh(self, mesh_id):
+        self._easily_parse()
         mo = MeshOpt(cad_file=self.cad_file_path, mesh_dir=self.work_path,
                      mesh_config=self.mesh_config, mesh_app=self.mesh_app)
-        mo.ready_mesh_dir(**self.mesh_config)
+        mo.ready_mesh_dir()
         command_dict = mo.get_commands_dict()
         slurm = Slurm()
         slurm_id = slurm.send_job(self.work_path, launch_script=self.lanuch_script,
-                                  username=self.username, total_core=10,
+                                  username=self.username, total_core=self.num_proc,
                                   temp_file="cfmesh_batch_script.sh", job_name=self.mesh_name, **command_dict)
         log_file = str(Path(self.work_path).joinpath(f"{slurm_id}.out"))
         err_file = str(Path(self.work_path).joinpath(f"{slurm_id}.err"))
@@ -91,14 +96,20 @@ class SU2MeshControler(object):
             if state in (4, 5):
                 # TODO 生成网格被中断保存
                 return None
-            time.sleep(60)
+            time.sleep(10)
         # TODO  添加异常处理
         ori_file = str(Path(self.work_path).joinpath("case.foam"))
 
-        cc = ConvertControler(ori_file=ori_file, des_file=self.des_path,
-                              vf_file=self.vf_path, thumb_path=self.thumb_path, convert_type=1)
+        try:
+
+            cc = ConvertControler(ori_file=ori_file, des_file=self.des_path,
+                                  vf_file=self.vf_path, thumb_path=self.thumb_path, convert_type=1)
+        except Exception:
+            core_logger.exception("创建ConvertControler失败")
+            raise ValueError("创建ConvertControler失败")
         core_logger.info("SU2MeshControler开始进行转换")
         cv_id = cc.start_actions()[0]
+        print(cv_id)
         DB.write_mesh_convert(mesh_id, cv_id)
         return mesh_id
 
