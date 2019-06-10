@@ -8,6 +8,7 @@
 """
 
 from monitor.WorkDirMonitor import WorkDirMonitor
+from monitor.Handlers import *
 
 global DIR_MONITOR
 

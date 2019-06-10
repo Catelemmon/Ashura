@@ -64,3 +64,6 @@ class SolveOpt(object):
     def start_solve(self):
         # 单机版本
         pass
+
+    def get_total_step(self):
+        pass

@@ -9,6 +9,7 @@
 
 import codecs
 import copy
+import re
 from collections import deque
 from pathlib import Path
 from typing import Dict, Iterable, List
@@ -84,6 +85,7 @@ class OFDictParse(object):
         """
         self._header_render()
         self._structure_render(config_data)
+        self._data = re.sub("'", "", self._data)
         return self._data
 
     def _structure_render(self, config_data: Dict, depth=0):

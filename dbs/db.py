@@ -26,16 +26,16 @@ class DB:
         pass
 
     @classmethod
-    def write_solve(cls, **kwargs):
+    def write_solve(cls, work_path, mesh_file_name, username, solve_app, launch_script, solve_config):
         _session = DBsession()
         try:
             solve = Solve(
-                solve_path=kwargs["work-path"],
-                mesh_path=kwargs["mesh-file-name"],
-                username=kwargs.get("username", "middleware"),
-                solve_app=kwargs.get("solve-app", 0),
-                launch_script=kwargs.get("launch_script"),
-                solve_config=kwargs.get("solve-config", "{}"),
+                solve_path=work_path,
+                mesh_path=mesh_file_name,
+                username=username,
+                solve_app=solve_app,
+                launch_script=launch_script,
+                solve_config=solve_config,
                 create_time=datetime.now()
             )
             _session.add(solve)
@@ -59,7 +59,8 @@ class DB:
         finally:
             _session.close()
 
-    def write_solve_status(self, **kwargs):
+    @classmethod
+    def write_solve_status(cls, **kwargs):
         _session = DBsession()
         try:
             ss = SolveStatus(

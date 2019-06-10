@@ -56,17 +56,18 @@ class SU2MeshControler(object):
             mc_process = Process(target=self._asyc_mesh, args=(mesh_id,))
             mc_process.start()
             core_logger.info(f"异步mesh_convert进程开始 | pid: {mc_process.pid} | mesh_id: {mesh_id}")
+            # self._asyc_mesh(mesh_id)
         except ProcessError:
             # TODO 更新数据库
             core_logger.exception(f"开启转换进程失败 | mesh_id: {mesh_id}")
-            return 1, "开启网格进程失败"
+            return -1, "开启网格进程失败"
         return mesh_id, "success!"
 
     def _easily_parse(self):
         for single_arg in self.mesh_config["meshParams"]["args"]:
             name = single_arg.get("name", None)
             if name == "processors_number":
-                self.num_proc = single_arg["formSchema"]["value"]["processorsNumber"]["processorsNumber"]
+                self.num_proc = int(single_arg["formSchema"]["value"]["processorsNumber"]["processorsNumber"])
                 return
 
     def _asyc_mesh(self, mesh_id):

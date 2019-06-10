@@ -22,9 +22,23 @@ SU2_SOLVE_CONFIG_MAP = {
 
 # JSON映射到SU2配置文件
 JSON_2_SU2CONFIG = {
-    "writeInterval": "write_interval",
-    "mesh_input_file": "mesh_input_file",
-    "EXT_ITER": "EXT_ITER",
+    "R": "R",
+    "gamma": "gamma",
+    "density": "density",
+    "AOA": "AOA",
+    "Mach": "Mach",
+    "slider": "slider",
+    "Reynolds": "Reynolds",
+    "temperature": "temperature",
+    "Reynolds_length": "Reynolds_length",
+    "wall": "WALL_MARKER_HEATFLUX",
+    "far_bc": "FAR_BC_MARKER_FAR",
+    "symmetric": "SYMMETRIC_MARKER_SYM",
+    "scheme": "scheme",
+    "CFL": "CFL",
+    "EXT_NUMBER": "EXT_NUMBER",
+    "SAVE_RESULT": "SAVE_RESULT",
+    "SAVE_HISTORY": "SAVE_HISTORY",
 }
 
 JSON_2_SLURMCONFIG = {
@@ -110,4 +124,8 @@ CONVERT_CLASSES = [
 
 OPENFOAM_CLASSES = {
     "meshDict": "dictionary",
+}
+
+MONITOR_HANDLERS_CLASSES_MAP = {
+    "SU2": "SU2ResultHandler",
 }

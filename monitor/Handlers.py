@@ -6,7 +6,6 @@
 @file: Handlers.py
 @time: 2019/4/30 下午1:52 
 """
-import json
 import re
 
 from watchdog.events import RegexMatchingEventHandler

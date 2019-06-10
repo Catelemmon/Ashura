@@ -18,7 +18,16 @@ CELL_TYPE_MAPS = {
     "Cube": "box"
 }
 
-EXCLUDE_SET = {"guid", }
+EXCLUDE_SET = {"guid", "source", "mapper", "actor"}
+
+
+def is_float(v):
+    try:
+        float(v)
+        return True
+    except Exception:
+        return False
+
 
 def _box_parse(box_dict: Dict):
     box_res = {"type": "box"}
@@ -53,7 +62,11 @@ CELL_FUNCS = {
 
 
 def mesh_scale_parser(mesh_scale_args: Dict):
-    return mesh_scale_args
+    mesh_scale_arg_res = copy.deepcopy(mesh_scale_args)
+    for key in mesh_scale_args:
+        if mesh_scale_args[key] == "0":
+            mesh_scale_arg_res.pop(key)
+    return mesh_scale_arg_res
 
 
 def object_refinements_parser(object_refinements_args: Dict):
@@ -80,10 +93,10 @@ def wtih_item_cell_parser(item_cells: List):
                 item_list = copy.deepcopy(cell["items"])
                 continue
             share_dict[key] = cell[key]
-    for item in item_list:
-        res[item] = {}
-        item_quote = res[item]
-        item_quote.update(copy.deepcopy(share_dict))
+        for item in item_list:
+            res[item] = {}
+            item_quote = res[item]
+            item_quote.update(copy.deepcopy(share_dict))
     return res
 
 
@@ -175,130 +188,7 @@ def cfmesh_config_parser(cfmesh_dict: Dict, cad_file: Dict):
 
 
 if __name__ == '__main__':
-    s = """{
-    "curProperty": "INDEX",
-    "meshParams": {
-      "args": [
-        {
-          "formName": "计算域",
-          "name": "comp_domain",
-          "formSchema": {
-            "value": {
-              "type": "Cube",
-              "args": {
-                "point1": [0, 0, 0],
-                "point2": [500, 500, 500]
-              }
-            }
-          }
-        },
-        {
-          "formName": "网格尺度",
-          "name": "mesh_scale",
-          "formSchema": {
-            "value": {
-              "boundaryCellSize": 10,
-              "minCellSize": 30,
-              "boundaryCellSizeRefinementThickness": 1,
-              "keepCellsIntersectingBoundary": 1,
-              "checkForGluedMesh": 0,
-              "enforceGeometryConstraints": 1,
-              "maxCellSize": 1
-            }
-          }
-        },
-        {
-          "formName": "局部细化",
-          "name": "objectRefinements",
-          "formSchema": {
-            "value": {
-              "objectRefinements": [
-                {
-                  "type": "Cube",
-                  "name": "Cube1",
-                  "guid": "12344",
-                  "value": {
-                    "xLength": 3,
-                    "yLength": 4,
-                    "zLength": 5,
-                    "center": [0, 0, 0],
-                    "additionalRefinementLevels": 7
-                  }
-                },
-                {
-                  "type": "Sphere",
-                  "name": "Sphere1",
-                  "guid": "123448",
-                  "value": {
-                    "radius": 5,
-                    "center": [0, 0, 0],
-                    "additionalRefinementLevels": 7,
-                    "refinementThickness": 0.3
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "formName": "面",
-          "name": "localRefinement",
-          "formSchema": {
-            "value": {
-              "localRefinement": [
-                {
-                  "guid": "a34343",
-                  "additionalRefinementLevels": 4,
-                  "items": ["Face_39", "Face_40"]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "formName": "边界层",
-          "name": "boundary_layer",
-          "formSchema": {
-            "value": {
-              "boundaryLayers": {
-                "optimiseLayer": 1,
-                "optimisationParameters": {
-                  "nSmoothNormals": 10,
-                  "maxNumIterations": 30,
-                  "reCalculateNormals": 1,
-                  "relThicknessTol": 0.3,
-                  "featureSizeFactor": 1
-                },
-                "symmetryPlaneLayerTopology": 1,
-                "untangleLayers": 1,
-                "patchBoundaryLayers": [
-                  {
-                    "guid": "a34343",
-                    "additionalRefinementLevels": 4,
-                    "items": ["Face_39", "Face_40"]
-                  }
-                ]   
-              }
-            }
-          }
-        },
-        {
-          "formName": "并行设置",
-          "name": "processors_number",
-          "formSchema": {
-            "value": {
-              "processorsNumber": {
-                "processorsNumber": 2,
-                "min": 1,
-                "max": 10
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
-  """
+    s = """{"meshParams": {"args": [{"name": "comp_domain", "formName": "计算域", "formSchema": {"value": {"args": {"point1": [0, 0, 0], "point2": [500, 500, 500]}, "type": "Cube"}}}, {"name": "mesh_scale", "formName": "全局参数", "formSchema": {"value": {"maxCellSize": 1, "minCellSize": 0, "boundaryCellSize": 0, "checkForGluedMesh": 0, "enforceGeometryConstraints": 0, "keepCellsIntersectingBoundary": 0, "boundaryCellSizeRefinementThickness": 0}}}, {"name": "objectRefinements", "formName": "体细化", "formSchema": {"value": {"objectRefinements": [{"guid": "4ff525c1-c443-65b5-02ae-65abf83374ad", "name": "长方体1", "type": "Cube", "actor": {}, "value": {"center": ["4", "2", 0], "xLength": "12", "yLength": "4", "zLength": "5", "refinementThickness": 0, "additionalRefinementLevels": "2"}, "mapper": {}, "source": {}}, {"guid": "f70303c5-5a82-4845-f683-366ac8482a76", "name": "长方体0", "type": "Cube", "actor": {}, "value": {"center": ["0.75", "0.8", 0], "xLength": "2", "yLength": "1.6", "zLength": "0.6", "refinementThickness": 0, "additionalRefinementLevels": "4"}, "mapper": {}, "source": {}}]}}}, {"name": "localRefinement", "formName": "面细化", "formSchema": {"value": {"localRefinement": [{"guid": "a34343", "items": ["Face_39", "Face_40", "Face_2", "Face_3"], "additionalRefinementLevels": "6"}, {"guid": "a3dfa28b-ef7b-7ac2-50ff-b5a43d0c049a", "items": ["Face_4", "Face_5", "Face_6"], "additionalRefinementLevels": "7"}, {"guid": "0bae04ce-e3fa-69e1-fac3-014a192447b8", "items": ["Face_7", "Face_8", "Face_9"], "additionalRefinementLevels": "8"}]}}}, {"name": "boundary_layer", "formName": "边界层", "formSchema": {"value": {"boundaryLayers": {"optimiseLayer": 1, "nSmoothNormals": "10", "untangleLayers": 1, "relThicknessTol": "0.2", "maxNumIterations": "30", "featureSizeFactor": "0.5", "allowDiscontinuity": 0, "reCalculateNormals": 1, "patchBoundaryLayers": [{"items": ["Face_39", "Face_40", "Face_2", "Face_3", "Face_4", "Face_5", "Face_6", "Face_7", "Face_8", "Face_9"], "nLayers": "20", "thicknessRatio": "1.2", "maxFirstLayerThickness": "0.0001"}], "optimisationParameters": {"nSmoothNormals": 5, "relThicknessTol": 0.1, "maxNumIterations": 10, "featureSizeFactor": 0.3, "allowDiscontinuity": 0, "reCalculateNormals": 1}, "symmetryPlaneLayerTopology": 1}}}}, {"name": "processors_number", "formName": "并行设置", "formSchema": {"value": {"processorsNumber": {"max": 10, "min": 1, "processorsNumber": 10}}}}]}, "curProperty": "INDEX"}"""
     d = json.loads(s)
     # print(wtih_item_cell_parser(d))
     res_dict = cfmesh_config_parser(d, {"surfaceFile": "\"solid.stl\""})

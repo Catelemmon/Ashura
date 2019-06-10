@@ -17,7 +17,7 @@ from flask_restplus import Resource, Api, Namespace
 from actions.compute_domain_flow import ComputeDomainControler
 from actions.mesh_flow import MeshControler
 from actions.convert_flow import ConvertControler
-from actions.solve_flow import stop_solve
+from actions.solve_flow import stop_solve, SolveController
 from actions.su2mesh_flow import SU2MeshControler
 from dbs import DB, SlurmDB
 from servers import AshuraServer
@@ -140,7 +140,18 @@ class DoSolve(Resource):
                 return create_resp(code, msg, results)
 
         # 执行solve
-        job_id, msg = solve_flow.start_solve_actions(**kwargs)
+        # job_id, msg = solve_flow.start_solve_actions(**kwargs)
+        sc = SolveController(
+            work_path=kwargs["work-path"],
+            mesh_file_name=kwargs["mesh-file-name"],
+            username=kwargs["username"],
+            job_name=kwargs["job-name"],
+            solve_config=json.loads(kwargs["solve-config"]),
+            solve_app=kwargs["solve-app"]
+        )
+        job_id, msg = sc.start_actions()
+        if job_id == -1:
+            return create_resp(2, msg, {})
         return create_resp(0, msg, {"jobId": job_id})
 
 
