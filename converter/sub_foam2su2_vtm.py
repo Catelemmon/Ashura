@@ -182,8 +182,9 @@ class Foam2SU2Converter(object):
         return None
 
     def _write_markers(self, cs_block, mpp_sets, bm_names):
+        erro_flag = 0
         bm_number = len(bm_names)
-        self.su2_file.write("NMARK= {}\n".format(bm_number))  # 写入NMARK
+        # self.su2_file.write("NMARK= {}\n".format(bm_number))  # 写入NMARK
         lp = re.compile("[\[\],L]")  # list pattern
 
         boundary_dict = {bm_names[bm_name]: [] for bm_name in bm_names.keys()}
@@ -211,15 +212,22 @@ class Foam2SU2Converter(object):
             pl = re.sub(lp, "", str(poly_points_id))
             belong_boundary = bm_names[multi_poly_index]
             poly_str = "{poly_type} {point_list} {poly_count}\n".format(poly_type=poly_type, point_list=pl,
-                                                                    poly_count=len(boundary_dict[belong_boundary]))
+                                                                        poly_count=len(boundary_dict[belong_boundary]))
             boundary_dict[belong_boundary].append(poly_str)  # 添加一个cell的str
 
         for boundary_name in boundary_dict.keys():
-            self.su2_file.write("MARKER_TAG= {}\n".format(boundary_name))
             polys = boundary_dict[boundary_name]
-            self.su2_file.write("MARKER_ELEMS= {}\n".format(len(polys)))
-            for poly in polys:
-                self.su2_file.write(poly)
+            if len(polys) == 0:
+                erro_flag += 1
+        Nmark_num = int(bm_number) - erro_flag
+        self.su2_file.write("NMARK= {}\n".format(Nmark_num))
+        for boundary_name in boundary_dict.keys():
+            polys = boundary_dict[boundary_name]
+            if len(polys) != 0:
+                self.su2_file.write("MARKER_TAG= {}\n".format(boundary_name))
+                self.su2_file.write("MARKER_ELEMS= {}\n".format(len(polys)))
+                for poly in polys:
+                    self.su2_file.write(poly)
             del boundary_dict[boundary_name]
             gc.collect()
 
